@@ -28,7 +28,8 @@
       },
       "config": {
          "googleMaps": { "apiKey": "AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg" }   
-      }
+      },
+      "permissions": [ "CAMERA", "WRITE_EXTERNAL_STORAGE", "CAMERA_ROLL", "ACCESS_NETWORK_STATE"]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
