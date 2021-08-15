@@ -33,7 +33,7 @@ export default function TabOneScreen() {
   useEffect(() => {
     axios({
       method: "GET",
-      url: "http://www.7timer.info/bin/astro.php?lon=113.2&lat=23.1&ac=0&unit=metric&output=json&tzshift=0",
+      url: "http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
@@ -70,10 +70,13 @@ export default function TabOneScreen() {
         longitudeDelta: 0.0421
       }}>
 
-      {state.markers.map((marker, index) => {
+      {posts.map((post: any, index: number) => {
           return (<Marker
           key={index}
-          coordinate={marker.coordinates}
+          coordinate={{
+            latitude: post.latitude,
+            longitude: post.longitude
+          }}
           title={'hello'}
           description={'test'}
         >
