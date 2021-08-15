@@ -12,14 +12,14 @@ export default {
     screens: {
       Root: {
         screens: {
-          TabOne: {
+          Mapa: {
             screens: {
-              TabOneScreen: 'one',
+              MapaScreen: 'one',
             },
           },
-          TabTwo: {
+          Conta: {
             screens: {
-              TabTwoScreen: 'two',
+              ContaScreen: 'two',
             },
           },
         },

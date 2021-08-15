@@ -1,9 +1,8 @@
 import axios from 'axios';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { Alert, Button, Modal, Pressable, StyleSheet, View, Text } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import RNFetchBlob from 'rn-fetch-blob';
 
 interface Postagem {
   id: number;
@@ -11,24 +10,9 @@ interface Postagem {
   longitude?: number;
 }
 
-export default function TabOneScreen() {
+export default function MapaScreen() {
   const [posts, setPosts] = useState(null);
-  const state = {
-    markers: [{
-      title: 'hello',
-      coordinates: {
-        latitude: -25.412127,
-        longitude: -49.226749
-      },
-    },
-    {
-      title: 'hello',
-      coordinates: {
-        latitude: -25.4300759,
-        longitude: -49.2717015
-      },  
-    }]
-  }
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     axios({
@@ -43,7 +27,7 @@ export default function TabOneScreen() {
       }
     })
       .then((response) => {
-        console.log(response.data);
+        //console.log(response.data);
         setPosts(response.data.dados);
       })
       .catch((error) => {
@@ -52,16 +36,13 @@ export default function TabOneScreen() {
   }, []); // "[]" makes sure the effect will run only once.
   
   return (
-   /*<View style={styles.container}>
-      <Text style={styles.title}>Portal Cidadão</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="/screens/TabOneScreen.tsx" />
-    </View>-->*/
+    <View>
     <MapView
       showsPointsOfInterest = {false}
       customMapStyle = {customMapStyles}
       style={{
-        flex: 1
+        width: '100%',
+        height: '93%'
       }}
       initialRegion={{
         latitude: -25.412127,
@@ -70,7 +51,7 @@ export default function TabOneScreen() {
         longitudeDelta: 0.0421
       }}>
 
-      {posts.map((post: any, index: number) => {
+      {posts && posts.map((post: any, index: any) => {
           return (<Marker
           key={index}
           coordinate={{
@@ -83,8 +64,37 @@ export default function TabOneScreen() {
 
         </Marker>)
       })}
-
       </MapView>
+      <View>
+        <Button
+          onPress={() => setModalVisible(true)}
+          title="Criar postagem"
+          color="#3f51b5"
+          accessibilityLabel="Criar postagem"
+        />
+      </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          Alert.alert("Modal has been closed.");
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>Nova Postagem</Text>
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setModalVisible(!modalVisible)}
+            >
+              <Text style={styles.textStyle}>Hide Modal</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -102,6 +112,44 @@ const styles = StyleSheet.create({
     marginVertical: 30,
     height: 1,
     width: '80%',
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 22
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center"
+  },
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2
+  },
+  buttonClose: {
+    backgroundColor: "#2196F3",
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
   },
 });
 
