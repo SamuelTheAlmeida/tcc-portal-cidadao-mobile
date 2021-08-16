@@ -1,8 +1,11 @@
 import axios from 'axios';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { Alert, Button, Modal, Pressable, StyleSheet, View, Text } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { Button, Colors, Headline, Portal, TextInput } from 'react-native-paper';
+import * as Location from 'expo-location';
+import Geocoder from 'react-native-geocoding';
 
 interface Postagem {
   id: number;
@@ -13,8 +16,32 @@ interface Postagem {
 export default function MapaScreen() {
   const [posts, setPosts] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [text, setText] = React.useState('');
+  const [location, setLocation] = useState(null);
+
+  // Initialize the module (needs to be done only once)
+  Geocoder.init("AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg", {language : "pt"});
 
   useEffect(() => {
+    setLoading(true);
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission to access location was denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+      Geocoder.from(location.coords.latitude, location.coords.longitude)
+        .then(json => {
+          //console.log(json.results[0].formatted_address);
+          setText(json.results[0].formatted_address);
+        })
+        .catch(error => console.warn(error));
+    })();
+    
     axios({
       method: "GET",
       url: "http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem",
@@ -32,11 +59,13 @@ export default function MapaScreen() {
       })
       .catch((error) => {
         console.log('teste:' + error);
-      });
+      })
+      .finally(() => setLoading(false));
   }, []); // "[]" makes sure the effect will run only once.
   
   return (
-    <View>
+    <View style={styles.containerStyle}>
+    {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
     <MapView
       showsPointsOfInterest = {false}
       customMapStyle = {customMapStyles}
@@ -68,12 +97,15 @@ export default function MapaScreen() {
       <View>
         <Button
           onPress={() => setModalVisible(true)}
-          title="Criar postagem"
+          mode="contained"
           color="#3f51b5"
           accessibilityLabel="Criar postagem"
-        />
+        >
+          Criar Postagem
+        </Button>
       </View>
       <Modal
+        style={styles.modalStyle}
         animationType="slide"
         transparent={true}
         visible={modalVisible}
@@ -84,13 +116,24 @@ export default function MapaScreen() {
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            <Text style={styles.modalText}>Nova Postagem</Text>
-            <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Text style={styles.textStyle}>Hide Modal</Text>
-            </Pressable>
+            <Headline>Nova Postagem</Headline>
+            <TextInput
+              mode="flat"
+              disabled={false}
+              style={styles.textInput}
+              label="Localização"
+              value={text}
+              onChangeText={text => setText(text)}
+            />
+
+            <View style={styles.buttonsView}>
+              <Button style={styles.modalLeftButtonStyle} icon="" mode="contained" onPress={() => setModalVisible(!modalVisible)}>
+                Salvar
+              </Button>
+              <Button style={styles.modalRightButtonStyle} icon="" mode="outlined" onPress={() => setModalVisible(!modalVisible)}>
+                Voltar
+              </Button>
+            </View>
           </View>
         </View>
       </Modal>
@@ -99,8 +142,18 @@ export default function MapaScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  spinner: {
+    position: 'absolute',
+    top: 255,
+    zIndex: 1,
+  },
+  containerStyle: {
     flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -113,17 +166,21 @@ const styles = StyleSheet.create({
     height: 1,
     width: '80%',
   },
+  modalStyle: {
+    width: '100%'
+  },
   centeredView: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 22
+    marginTop: 22,
+    width: '100%'
   },
   modalView: {
-    margin: 20,
+    margin: 2,
     backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
+    borderRadius: 25,
+    padding: 10,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
@@ -132,7 +189,32 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5
+    elevation: 5,
+    width: '75%',
+    display: 'flex',
+  },
+  textInput: {
+    //height: 40,
+    //flex: 1,
+    //marginVertical: 70,
+    width: 250,
+    backgroundColor: '#FFFCFC',
+    //paddingVertical: 20
+  },
+  buttonsView: {
+    display: 'flex',
+    flexDirection: "row",
+    alignItems: 'flex-end',
+    marginTop: 20,
+    marginBottom: 5,
+    marginLeft: 0,
+    marginRight: 0
+  },
+  modalLeftButtonStyle: {
+    marginRight: 10
+  },
+  modalRightButtonStyle: {
+    marginLeft: 10 
   },
   modalText: {
     marginBottom: 15,
