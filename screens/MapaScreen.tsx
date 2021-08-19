@@ -1,30 +1,48 @@
 import axios from 'axios';
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { createRef, useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Button, Colors, Headline, Portal, TextInput } from 'react-native-paper';
 import * as Location from 'expo-location';
 import Geocoder from 'react-native-geocoding';
+import { TextInput as RNTextInput } from 'react-native';
+import { LocationAccuracy } from 'expo-location';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { NavigationContainer, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../types';
 
 interface Postagem {
   id: number;
   latitude?: number;
   longitude?: number;
 }
+type mapaScreenProp = StackNavigationProp<RootStackParamList, 'MapaScreen'>;
 
 export default function MapaScreen() {
+  const navigation = useNavigation<mapaScreenProp>();
+  const route = useRoute<RouteProp<RootStackParamList, 'MapaScreen'>>();
+  console.log(route.params);
+
   const [posts, setPosts] = useState(null);
-  const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [text, setText] = React.useState('');
   const [location, setLocation] = useState(null);
+  const [time, setTime] = useState(Date.now());
+  const [selection, setSelection] = useState({
+    start: 0,
+    end: 0
+  });
+  const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
+  var textInput = createRef<RNTextInput>();
 
   // Initialize the module (needs to be done only once)
-  Geocoder.init("AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg", {language : "pt"});
+  Geocoder.init(key, {language : "pt"});
+
 
   useEffect(() => {
-    setLoading(true);
+    const interval = setInterval(() => atualizarMapa(), 5000);
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -32,16 +50,30 @@ export default function MapaScreen() {
         return;
       }
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-      Geocoder.from(location.coords.latitude, location.coords.longitude)
+      await Location.getLastKnownPositionAsync()
+      .then((pos) => {
+        //console.log(pos);
+        setLocation(pos);
+      });
+      //console.log(location);
+      if (location) {
+        Geocoder.from(location.coords.latitude, location.coords.longitude)
         .then(json => {
           //console.log(json.results[0].formatted_address);
           setText(json.results[0].formatted_address);
         })
         .catch(error => console.warn(error));
+      }
+
     })();
-    
+
+      return () => {
+        clearInterval(interval);
+      };
+  }, []); // "[]" makes sure the effect will run only once.
+
+  function atualizarMapa() {
+    setLoading(true);
     axios({
       method: "GET",
       url: "http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem",
@@ -58,10 +90,27 @@ export default function MapaScreen() {
         setPosts(response.data.dados);
       })
       .catch((error) => {
-        console.log('teste:' + error);
+        console.log('erro:' + error);
       })
       .finally(() => setLoading(false));
-  }, []); // "[]" makes sure the effect will run only once.
+  }
+  
+  function salvarPostagem() {
+    let model = {
+      subcategoria: { codigo: 1, nome: 'Reclamacao', descricao: 'Reclamacao'},
+      categoriaId: 1,
+      titulo: 'teste',
+      descricao: 'teste teste',
+      imagemUrl: 'string',
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      bairro: 'teste',
+      resolvido: false
+    };
+
+    /*axios.post('https://reqres.in/api/articles', article)
+    .then(response => this.setState({ articleId: response.data.id }));*/
+  }
   
   return (
     <View style={styles.containerStyle}>
@@ -96,47 +145,14 @@ export default function MapaScreen() {
       </MapView>
       <View>
         <Button
-          onPress={() => setModalVisible(true)}
+          onPress={() => navigation.navigate('NovaPostagemScreen')}
           mode="contained"
           color="#3f51b5"
           accessibilityLabel="Criar postagem"
         >
-          Criar Postagem
+          Criar Postagem {route.params}
         </Button>
       </View>
-      <Modal
-        style={styles.modalStyle}
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          Alert.alert("Modal has been closed.");
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Headline>Nova Postagem</Headline>
-            <TextInput
-              mode="flat"
-              disabled={false}
-              style={styles.textInput}
-              label="Localização"
-              value={text}
-              onChangeText={text => setText(text)}
-            />
-
-            <View style={styles.buttonsView}>
-              <Button style={styles.modalLeftButtonStyle} icon="" mode="contained" onPress={() => setModalVisible(!modalVisible)}>
-                Salvar
-              </Button>
-              <Button style={styles.modalRightButtonStyle} icon="" mode="outlined" onPress={() => setModalVisible(!modalVisible)}>
-                Voltar
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -177,7 +193,7 @@ const styles = StyleSheet.create({
     width: '100%'
   },
   modalView: {
-    margin: 2,
+    /*margin: 2,
     backgroundColor: "white",
     borderRadius: 25,
     padding: 10,
@@ -189,9 +205,19 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5,
-    width: '75%',
+    elevation: 5,*/
+    width: '95%',
     display: 'flex',
+    height: '40%',
+    backgroundColor: "white",
+    padding: 20
+  },
+  autocompleteView: {
+    paddingTop: 30,
+    paddingBottom: 30,
+    height: '35%',
+    zIndex: 1000,
+    elevation: 1000
   },
   textInput: {
     //height: 40,
@@ -199,6 +225,7 @@ const styles = StyleSheet.create({
     //marginVertical: 70,
     width: 250,
     backgroundColor: '#FFFCFC',
+    fontSize: 13
     //paddingVertical: 20
   },
   buttonsView: {

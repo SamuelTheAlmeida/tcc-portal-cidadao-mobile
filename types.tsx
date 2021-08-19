@@ -4,8 +4,10 @@
  */
 
 export type RootStackParamList = {
-  Root: undefined;
+  Root: {};
   NotFound: undefined;
+  MapaScreen: {};
+  NovaPostagemScreen: undefined;
 };
 
 export type BottomTabParamList = {
