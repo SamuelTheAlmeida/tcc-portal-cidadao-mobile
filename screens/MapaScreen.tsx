@@ -23,7 +23,6 @@ type mapaScreenProp = StackNavigationProp<RootStackParamList, 'MapaScreen'>;
 export default function MapaScreen() {
   const navigation = useNavigation<mapaScreenProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'MapaScreen'>>();
-  console.log(route.params);
 
   const [posts, setPosts] = useState(null);
   const [loading, setLoading] = useState(false);

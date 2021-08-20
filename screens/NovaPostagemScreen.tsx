@@ -1,15 +1,16 @@
 import * as React from 'react';
-import { createRef, useState } from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { createRef, useEffect, useRef, useState } from 'react';
+import { StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
 import { Button, Colors, Headline } from 'react-native-paper';
 import Geocoder from 'react-native-geocoding';
 import { TextInput as RNTextInput } from 'react-native';
-import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
+import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef, Place } from 'react-native-google-places-autocomplete';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 import axios from 'axios';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import { useNavigation } from '@react-navigation/native';
+import * as Location from 'expo-location';
 
 interface Postagem {
   id: number;
@@ -21,20 +22,65 @@ type novaPostagemScreenProp = StackNavigationProp<RootStackParamList, 'NovaPosta
 export default function MapaScreen() {
 const navigation = useNavigation<novaPostagemScreenProp>();
 
-  const [posts, setPosts] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [text, setText] = React.useState('');
   const [location, setLocation] = useState(null);
-  const [selection, setSelection] = useState({
-    start: 0,
-    end: 0
-  });
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
 
-  const googlePlacesAutocompleteRef = createRef<GooglePlacesAutocompleteRef>();
+  var googlePlacesAutocompleteRef = useRef<GooglePlacesAutocompleteRef>();
 
   Geocoder.init(key, {language : "pt"});
+  console.log('flow');
+  (async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission to access location was denied');
+      return;
+    }
+
+    await Location.getCurrentPositionAsync()
+    .then((pos) => {
+      if (pos) {
+        Geocoder.from(pos.coords.latitude, pos.coords.longitude)
+        .then(json => {
+          console.log('aaa');
+          console.log(json.results[0].formatted_address);
+          googlePlacesAutocompleteRef.current.setAddressText(json.results[0].formatted_address);
+        })
+        .catch(error => console.warn(error));
+      }
+    });
+
+
+  })
+
+  useEffect(() => {
+    console.log('use effect');
+    setTimeout(() => {
+      (async () => {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission to access location was denied');
+          return;
+        }
+  
+        await Location.getCurrentPositionAsync()
+        .then((pos) => {
+          if (pos) {
+            Geocoder.from(pos.coords.latitude, pos.coords.longitude)
+            .then(json => {
+              console.log('aaa');
+              console.log(json.results[0].formatted_address);
+              googlePlacesAutocompleteRef.current.setAddressText(json.results[0].formatted_address);
+            })
+            .catch(error => console.warn(error));
+          }
+        });
+  
+      })();
+    }, 0);
+
+  }, []); // "[]" makes sure the effect will run only once.
   
   function salvarPostagem() {
     //navigation.navigate('Root', {test: 'aaaa'});
@@ -54,7 +100,6 @@ const navigation = useNavigation<novaPostagemScreenProp>();
 
     axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem', model)
     .then(response => {
-        console.log(response);
         if (response.status == 200) {
             navigation.navigate('Root');
         }
@@ -63,8 +108,6 @@ const navigation = useNavigation<novaPostagemScreenProp>();
         console.log(err);
     })
     .finally(() => setLoading(false));
-
-    
   }
   
   return (
@@ -75,8 +118,12 @@ const navigation = useNavigation<novaPostagemScreenProp>();
             <Headline>Nova Postagem</Headline>
             <View style={styles.autocompleteView}>
               <GooglePlacesAutocomplete
+                numberOfLines={2}
                 ref={googlePlacesAutocompleteRef}
                 placeholder='Localização'
+                textInputProps={{
+                  multiline: true
+                }}
                 onPress={(data, details = null) => {
                   // 'details' is provided when fetchDetails = true
                   Geocoder.from(data.description).then((result) => {
@@ -99,9 +146,9 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                     backgroundColor: 'grey',
                   },
                   textInput: {
-                    height: 38,
+                    height: 60,
                     color: '#5d5d5d',
-                    fontSize: 16,
+                    fontSize: 13
                   },
                   predefinedPlacesDescription: {
                     color: '#1faadb',
@@ -109,7 +156,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                 }}
               />
                 <Button 
-                style={{position: 'absolute', right: 0, top: 75, zIndex: -1}} 
+                style={{position: 'absolute', right: 0, top: 95, zIndex: -1}} 
                 compact={true} 
                 icon="close" 
                 mode="outlined" 
@@ -123,7 +170,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                     <Button style={styles.modalLeftButtonStyle} icon="" mode="contained" onPress={() => { salvarPostagem(); } }>
                     Salvar
                     </Button>
-                    <Button style={styles.modalRightButtonStyle} icon="" mode="outlined" onPress={() => setModalVisible(!modalVisible)}>
+                    <Button style={styles.modalRightButtonStyle} icon="" mode="outlined" onPress={() => navigation.navigate('Root')}>
                         Voltar
                     </Button>
             </View>
