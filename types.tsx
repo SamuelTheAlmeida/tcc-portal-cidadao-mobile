@@ -9,12 +9,14 @@ export type RootStackParamList = {
   ContaScreen: undefined;
   MapaScreen: {};
   NovaPostagemScreen: undefined;
+  NovoCadastroScreen: undefined;
 };
 
 export type BottomTabParamList = {
   MapaScreen: {};
   NovaPostagemScreen: undefined;
   ContaScreen: undefined;
+  NovoCadastroScreen: undefined;
 };
 
 export type TabOneParamList = {

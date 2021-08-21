@@ -12,6 +12,7 @@ import ContaScreen from '../screens/ContaScreen';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import MapaScreen from '../screens/NovaPostagemScreen';
 import NovaPostagemScreen from '../screens/NovaPostagemScreen';
+import NovoCadastroScreen from '../screens/NovoCadastroScreen';
 import { RootStackParamList } from '../types';
 import BottomTabNavigator from './BottomTabNavigator';
 import LinkingConfiguration from './LinkingConfiguration';
@@ -37,6 +38,7 @@ function RootNavigator() {
       <Stack.Screen name="NovaPostagemScreen" component={NovaPostagemScreen} />
       <Stack.Screen name="MapaScreen" component={MapaScreen} />
       <Stack.Screen name="ContaScreen" component={ContaScreen} />
+      <Stack.Screen name="NovoCadastroScreen" component={NovoCadastroScreen} />
     </Stack.Navigator>
   );
 }

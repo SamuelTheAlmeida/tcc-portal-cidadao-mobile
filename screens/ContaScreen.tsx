@@ -9,6 +9,8 @@ import { RootStackParamList } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
+import JWT from 'expo-jwt';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface FormData {
   login: string;
@@ -16,7 +18,7 @@ interface FormData {
 }
 
 type ContaScreenProp = StackNavigationProp<RootStackParamList, 'ContaScreen'>;
-export default function ContaScren() {
+export default function ContaScreen() {
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<ContaScreenProp>();
 
@@ -35,10 +37,13 @@ export default function ContaScren() {
     };
 
     axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/usuario/login', model)
-    .then(response => {
-        console.log(response.data.sucesso);
+    .then(async response => {
+        console.log(response.data.dados.token);
         if (response.status == 200) {
           if (response.data?.sucesso) {
+            const dados = response.data.dados;
+            console.log(JWT.decode(dados.token, 'c3ecf6c5baf0b269698c385e4a647f3e'));
+            await AsyncStorage.setItem('@PORTAL_CIDADAO_USER_TOKEN', dados.token);
             Toast.show('Login realizado com sucesso!', {
               duration: Toast.durations.SHORT,
               position: Toast.positions.CENTER
@@ -116,6 +121,11 @@ export default function ContaScren() {
             style={styles.loginButton}
             onPress={onSubmit}
           >Login</Button>
+          <Button
+            style={styles.fbLoginButton}
+            onPress={() => navigation.navigate('NovoCadastroScreen')}
+            color="#3897f1"
+          >Novo Cadastro</Button> 
           {/* <Button
             style={styles.fbLoginButton}
             onPress={() => console.log("pressed login FB!!")}
