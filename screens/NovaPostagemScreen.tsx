@@ -1,11 +1,9 @@
 import * as React from 'react';
-import { createRef, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
 import { Button, Colors, Headline } from 'react-native-paper';
 import Geocoder from 'react-native-geocoding';
-import { TextInput as RNTextInput } from 'react-native';
-import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef, Place } from 'react-native-google-places-autocomplete';
-import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
+import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
 import axios from 'axios';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';

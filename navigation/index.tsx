@@ -7,6 +7,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createStackNavigator } from '@react-navigation/stack';
 import * as React from 'react';
 import { ColorSchemeName } from 'react-native';
+import ContaScreen from '../screens/ContaScreen';
 
 import NotFoundScreen from '../screens/NotFoundScreen';
 import MapaScreen from '../screens/NovaPostagemScreen';
@@ -35,6 +36,7 @@ function RootNavigator() {
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
       <Stack.Screen name="NovaPostagemScreen" component={NovaPostagemScreen} />
       <Stack.Screen name="MapaScreen" component={MapaScreen} />
+      <Stack.Screen name="ContaScreen" component={ContaScreen} />
     </Stack.Navigator>
   );
 }

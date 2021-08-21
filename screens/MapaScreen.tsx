@@ -1,15 +1,13 @@
 import axios from 'axios';
 import * as React from 'react';
 import { createRef, useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, View, Text, ActivityIndicator } from 'react-native';
+import { Alert, StyleSheet, View, ActivityIndicator } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { Button, Colors, Headline, Portal, TextInput } from 'react-native-paper';
+import { Button, Colors } from 'react-native-paper';
 import * as Location from 'expo-location';
 import Geocoder from 'react-native-geocoding';
 import { TextInput as RNTextInput } from 'react-native';
-import { LocationAccuracy } from 'expo-location';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { NavigationContainer, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 

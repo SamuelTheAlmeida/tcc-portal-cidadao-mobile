@@ -13,6 +13,7 @@ import useColorScheme from '../hooks/useColorScheme';
 import MapaScreen from '../screens/MapaScreen';
 import ContaScreen from '../screens/ContaScreen';
 import { BottomTabParamList, TabOneParamList, TabTwoParamList } from '../types';
+import NovaPostagemScreen from '../screens/NovaPostagemScreen';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -21,17 +22,17 @@ export default function BottomTabNavigator() {
 
   return (
     <BottomTab.Navigator
-      initialRouteName="Mapa"
+      initialRouteName='MapaScreen'
       tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}>
       <BottomTab.Screen
-        name="Mapa"
+        name="MapaScreen"
         component={TabOneNavigator}
         options={{
           tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />,
         }}
       />
       <BottomTab.Screen
-        name="Conta"
+        name="ContaScreen"
         component={TabTwoNavigator}
         options={{
           tabBarIcon: ({ color }) => <TabBarIcon name="person" color={color} />,

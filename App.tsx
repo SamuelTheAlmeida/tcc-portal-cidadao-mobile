@@ -6,6 +6,7 @@ import { DefaultTheme, Provider as PaperProvider } from 'react-native-paper';
 import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
+import { RootSiblingParent } from 'react-native-root-siblings';
 
 export default function App() {
   const isLoadingComplete = useCachedResources();
@@ -28,7 +29,9 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
-          <Navigation colorScheme={colorScheme} />
+          <RootSiblingParent>
+            <Navigation colorScheme={colorScheme} />
+          </RootSiblingParent>
           <StatusBar />
         </PaperProvider>
       </SafeAreaProvider>

@@ -6,13 +6,15 @@
 export type RootStackParamList = {
   Root: {};
   NotFound: undefined;
+  ContaScreen: undefined;
   MapaScreen: {};
   NovaPostagemScreen: undefined;
 };
 
 export type BottomTabParamList = {
-  Mapa: undefined;
-  Conta: undefined;
+  MapaScreen: {};
+  NovaPostagemScreen: undefined;
+  ContaScreen: undefined;
 };
 
 export type TabOneParamList = {
