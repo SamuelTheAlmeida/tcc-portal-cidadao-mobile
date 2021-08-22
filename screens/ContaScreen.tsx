@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import {Keyboard, Text, View, TextInput, TouchableWithoutFeedback, Alert, KeyboardAvoidingView} from 'react-native';
 import { ActivityIndicator, Button, Colors } from 'react-native-paper';
@@ -20,6 +20,7 @@ interface FormData {
 type ContaScreenProp = StackNavigationProp<RootStackParamList, 'ContaScreen'>;
 export default function ContaScreen() {
   const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState(null);
   const navigation = useNavigation<ContaScreenProp>();
 
   const { control, handleSubmit } = useForm<FormData>({
@@ -28,6 +29,31 @@ export default function ContaScreen() {
       senha: '',
     },
   });
+
+  useEffect(() => {
+    AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
+    .then((token) => {
+      if (token) {
+        console.log('user already logged in');
+        //console.log(JWT.decode(token, 'c3ecf6c5baf0b269698c385e4a647f3e', { timeSkew: 30 }));
+        /*AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA').then(
+          userData => setUserData(JSON.parse(userData))
+        );*/
+      } else {
+        console.log('user not authenticated');
+      }
+    });
+  }, []); // "[]" makes sure the effect will run only once.
+
+  async function logout() {
+    await AsyncStorage.removeItem('@PORTAL_CIDADAO_USER_TOKEN');
+    await AsyncStorage.removeItem('@PORTAL_CIDADAO_USER_DATA');
+    setUserData(null);
+    Toast.show('Logout realizado com sucesso!', {
+      duration: Toast.durations.SHORT,
+      position: Toast.positions.CENTER
+    });
+  }
 
   const onSubmit = handleSubmit(({ login, senha }) => {
     setLoading(true);
@@ -38,12 +64,14 @@ export default function ContaScreen() {
 
     axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/usuario/login', model)
     .then(async response => {
-        console.log(response.data.dados.token);
+        console.log(response.data.dados);
         if (response.status == 200) {
           if (response.data?.sucesso) {
             const dados = response.data.dados;
-            console.log(JWT.decode(dados.token, 'c3ecf6c5baf0b269698c385e4a647f3e'));
+            //console.log(JWT.decode(dados.token, 'c3ecf6c5baf0b269698c385e4a647f3e'));
             await AsyncStorage.setItem('@PORTAL_CIDADAO_USER_TOKEN', dados.token);
+            await AsyncStorage.setItem('@PORTAL_CIDADAO_USER_DATA', JSON.stringify(dados));
+            setUserData(dados);
             Toast.show('Login realizado com sucesso!', {
               duration: Toast.durations.SHORT,
               position: Toast.positions.CENTER
@@ -63,79 +91,110 @@ export default function ContaScreen() {
     .finally(() => setLoading(false));
   });
 
-    return (
-    <KeyboardAvoidingView 
-    keyboardVerticalOffset={20}
-    style={styles.containerView} 
-    behavior="padding">
-    {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+    if (userData) {
+      return (        <KeyboardAvoidingView 
+        keyboardVerticalOffset={20}
+        style={styles.containerView} 
+        behavior="padding">
+        {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+    
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.loginScreenContainer}>
+            <View style={styles.loginFormView}>
+              <Text style={styles.logoText}>{userData.nome}</Text>
+              <Text style={styles.userDataInfo}>{userData.email}</Text>
 
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.loginScreenContainer}>
-        <View style={styles.loginFormView}>
-        <Text style={styles.logoText}>Portal Cidadão</Text>
-
-        <Controller
-          control={control}
-          name="login"
-          render={({ field: { onBlur, onChange, value } }) => (
-            <TextInput
-              autoCapitalize="none"
-              autoCompleteType="email"
-              autoCorrect={false}
-              keyboardType="email-address"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              returnKeyType="next"
-              placeholder="E-mail ou CPF" 
-              placeholderTextColor="#c4c3cb" 
-              style={styles.loginFormTextInput} 
-              textContentType="username"
-              value={value}
+              <Button
+                mode="contained"
+                style={styles.loginButton}
+                onPress={logout}
+              >SAIR</Button>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>)
+    } else {
+      return (
+        <KeyboardAvoidingView 
+        keyboardVerticalOffset={20}
+        style={styles.containerView} 
+        behavior="padding">
+        {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+    
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.loginScreenContainer}>
+            <View style={styles.loginFormView}>
+            <Text style={styles.logoText}>Portal Cidadão</Text>
+    
+            <Controller
+              control={control}
+              name="login"
+              render={({ field: { onBlur, onChange, value } }) => (
+                <TextInput
+                  autoCapitalize="none"
+                  autoCompleteType="email"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  returnKeyType="next"
+                  placeholder="E-mail ou CPF" 
+                  placeholderTextColor="#c4c3cb" 
+                  style={styles.loginFormTextInput} 
+                  textContentType="username"
+                  value={value}
+                />
+              )}
             />
-          )}
-        />
+    
+            <Controller
+            control={control}
+            name="senha"
+            render={({ field: { onBlur, onChange, value }}) => (
+              <TextInput
+                autoCapitalize="none"
+                autoCompleteType="password"
+                autoCorrect={false}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                onSubmitEditing={onSubmit}
+                returnKeyType="done"
+                secureTextEntry
+                placeholder="Senha" 
+                placeholderTextColor="#c4c3cb" 
+                style={styles.loginFormTextInput} 
+                textContentType="password"
+                value={value}
+              />
+            )}
+            />
+              <Button
+                style={styles.loginButton}
+                mode="contained"
+                onPress={onSubmit}
+              >Login</Button>
+              <Button
+                style={styles.fbLoginButton}
+                onPress={() => navigation.navigate('MapaScreen')}
+                color="#3897f1"
+              >Entrar como visitante</Button>
+              <Button
+                style={styles.fbLoginButton}
+                onPress={() => navigation.navigate('NovoCadastroScreen')}
+                color="#3897f1"
+              >Novo Cadastro</Button> 
+              {/* <Button
+                style={styles.fbLoginButton}
+                onPress={() => console.log("pressed login FB!!")}
+                color="#3897f1"
+              >Login with Facebook</Button> */}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      );
+    }
 
-        <Controller
-        control={control}
-        name="senha"
-        render={({ field: { onBlur, onChange, value }}) => (
-          <TextInput
-            autoCapitalize="none"
-            autoCompleteType="password"
-            autoCorrect={false}
-            onBlur={onBlur}
-            onChangeText={onChange}
-            onSubmitEditing={onSubmit}
-            returnKeyType="done"
-            secureTextEntry
-            placeholder="Senha" 
-            placeholderTextColor="#c4c3cb" 
-            style={styles.loginFormTextInput} 
-            textContentType="password"
-            value={value}
-          />
-        )}
-        />
-          <Button
-            style={styles.loginButton}
-            onPress={onSubmit}
-          >Login</Button>
-          <Button
-            style={styles.fbLoginButton}
-            onPress={() => navigation.navigate('NovoCadastroScreen')}
-            color="#3897f1"
-          >Novo Cadastro</Button> 
-          {/* <Button
-            style={styles.fbLoginButton}
-            onPress={() => console.log("pressed login FB!!")}
-            color="#3897f1"
-          >Login with Facebook</Button> */}
-        </View>
-      </View>
-    </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
-  );
 }
 
 const styles = StyleSheet.create({
@@ -157,6 +216,12 @@ const styles = StyleSheet.create({
     marginTop: 150,
     marginBottom: 30,
     textAlign: 'center',
+  },
+  userDataInfo: {
+    fontSize: 20,
+    fontWeight: "600",
+    textAlign: 'center',
+    marginBottom: 50
   },
   loginFormView: {
     flex: 1

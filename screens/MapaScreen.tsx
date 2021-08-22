@@ -10,6 +10,7 @@ import { TextInput as RNTextInput } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Postagem {
   id: number;
@@ -84,6 +85,10 @@ export default function MapaScreen() {
     })
       .then((response) => {
         //console.log(response.data);
+        const bairros = response.data.dados.map(
+          (item: any) => { return item.bairro } 
+        );
+        //console.log(bairros);
         setPosts(response.data.dados);
       })
       .catch((error) => {
@@ -91,22 +96,32 @@ export default function MapaScreen() {
       })
       .finally(() => setLoading(false));
   }
-  
-  function salvarPostagem() {
-    let model = {
-      subcategoria: { codigo: 1, nome: 'Reclamacao', descricao: 'Reclamacao'},
-      categoriaId: 1,
-      titulo: 'teste',
-      descricao: 'teste teste',
-      imagemUrl: 'string',
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      bairro: 'teste',
-      resolvido: false
-    };
 
-    /*axios.post('https://reqres.in/api/articles', article)
-    .then(response => this.setState({ articleId: response.data.id }));*/
+  function criarPostagem() {
+    AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
+    .then((token) => {
+      if (token) {
+        navigation.navigate('NovaPostagemScreen');
+      } else {
+        Alert.alert(
+          'Aviso',
+          'Para criar uma postagem é necessário estar logado em sua conta!',
+          [
+            {
+              text: "Voltar",
+              onPress: () => navigation.navigate('MapaScreen'),
+              style: "default",
+            },
+            {
+              text: "Ir para login",
+              onPress: () => navigation.navigate('ContaScreen'),
+              style: "default",
+            }
+          ],
+          { cancelable: true },
+          );
+      }
+    });
   }
   
   return (
@@ -142,7 +157,7 @@ export default function MapaScreen() {
       </MapView>
       <View>
         <Button
-          onPress={() => navigation.navigate('NovaPostagemScreen')}
+          onPress={criarPostagem}
           mode="contained"
           color="#3f51b5"
           accessibilityLabel="Criar postagem"
@@ -174,75 +189,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
   modalStyle: {
     width: '100%'
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 22,
-    width: '100%'
-  },
-  modalView: {
-    /*margin: 2,
-    backgroundColor: "white",
-    borderRadius: 25,
-    padding: 10,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,*/
-    width: '95%',
-    display: 'flex',
-    height: '40%',
-    backgroundColor: "white",
-    padding: 20
-  },
-  autocompleteView: {
-    paddingTop: 30,
-    paddingBottom: 30,
-    height: '35%',
-    zIndex: 1000,
-    elevation: 1000
-  },
   textInput: {
-    //height: 40,
-    //flex: 1,
-    //marginVertical: 70,
     width: 250,
     backgroundColor: '#FFFCFC',
     fontSize: 13
-    //paddingVertical: 20
-  },
-  buttonsView: {
-    display: 'flex',
-    flexDirection: "row",
-    alignItems: 'flex-end',
-    marginTop: 20,
-    marginBottom: 5,
-    marginLeft: 0,
-    marginRight: 0
-  },
-  modalLeftButtonStyle: {
-    marginRight: 10
-  },
-  modalRightButtonStyle: {
-    marginLeft: 10 
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center"
   },
   button: {
     borderRadius: 20,

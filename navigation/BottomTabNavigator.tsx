@@ -22,12 +22,13 @@ export default function BottomTabNavigator() {
 
   return (
     <BottomTab.Navigator
-      initialRouteName='MapaScreen'
+      initialRouteName='ContaScreen'
       tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}>
       <BottomTab.Screen
         name="MapaScreen"
         component={TabOneNavigator}
         options={{
+          tabBarLabel: 'Mapa',
           tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />,
         }}
       />
@@ -35,6 +36,7 @@ export default function BottomTabNavigator() {
         name="ContaScreen"
         component={TabTwoNavigator}
         options={{
+          tabBarLabel: 'Conta',
           tabBarIcon: ({ color }) => <TabBarIcon name="person" color={color} />,
         }}
       />

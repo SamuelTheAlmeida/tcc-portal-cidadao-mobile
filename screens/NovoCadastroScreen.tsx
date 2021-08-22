@@ -80,96 +80,97 @@ export default function NovoCadastroScreen() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.loginScreenContainer}>
         <View style={styles.loginFormView}>
-        <Text style={styles.logoText}>Portal Cidadão</Text>
+          <Text style={styles.logoText}>Portal Cidadão</Text>
 
-        <Controller
-          control={control}
-          name="nome"
-          render={({ field: { onBlur, onChange, value } }) => (
-            <TextInput
-              autoCapitalize="none"
-              autoCompleteType="name"
-              autoCorrect={true}
-              keyboardType="default"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              returnKeyType="next"
-              placeholder="Nome Completo" 
-              placeholderTextColor="#c4c3cb" 
-              style={styles.loginFormTextInput} 
-              textContentType="name"
-              value={value}
-            />
-          )}
-        />
-
-        <Controller
-          control={control}
-          name="CPF"
-          render={({ field: { onBlur, onChange, value } }) => (
-            <TextInput
-              autoCapitalize="none"
-              autoCompleteType="off"
-              autoCorrect={false}
-              keyboardType="number-pad"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              returnKeyType="next"
-              placeholder="CPF" 
-              placeholderTextColor="#c4c3cb" 
-              style={styles.loginFormTextInput} 
-              textContentType="none"
-              value={value}
-            />
-          )}
-        />
-
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onBlur, onChange, value } }) => (
-            <TextInput
-              autoCapitalize="none"
-              autoCompleteType="email"
-              autoCorrect={false}
-              keyboardType="email-address"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              returnKeyType="next"
-              placeholder="E-mail" 
-              placeholderTextColor="#c4c3cb" 
-              style={styles.loginFormTextInput} 
-              textContentType="username"
-              value={value}
-            />
-          )}
-        />
-
-        <Controller
-        control={control}
-        name="senha"
-        render={({ field: { onBlur, onChange, value }}) => (
-          <TextInput
-            autoCapitalize="none"
-            autoCompleteType="password"
-            autoCorrect={false}
-            onBlur={onBlur}
-            onChangeText={onChange}
-            onSubmitEditing={onSubmit}
-            returnKeyType="done"
-            secureTextEntry
-            placeholder="Senha" 
-            placeholderTextColor="#c4c3cb" 
-            style={styles.loginFormTextInput} 
-            textContentType="password"
-            value={value}
+          <Controller
+            control={control}
+            name="nome"
+            render={({ field: { onBlur, onChange, value } }) => (
+              <TextInput
+                autoCapitalize="none"
+                autoCompleteType="name"
+                autoCorrect={true}
+                keyboardType="default"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                returnKeyType="next"
+                placeholder="Nome Completo" 
+                placeholderTextColor="#c4c3cb" 
+                style={styles.loginFormTextInput} 
+                textContentType="name"
+                value={value}
+              />
+            )}
           />
-        )}
-        />
-          <Button
-            style={styles.loginButton}
-            onPress={onSubmit}
-          >Salvar dados</Button>
+
+          <Controller
+            control={control}
+            name="CPF"
+            render={({ field: { onBlur, onChange, value } }) => (
+              <TextInput
+                autoCapitalize="none"
+                autoCompleteType="off"
+                autoCorrect={false}
+                keyboardType="number-pad"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                returnKeyType="next"
+                placeholder="CPF" 
+                placeholderTextColor="#c4c3cb" 
+                style={styles.loginFormTextInput} 
+                textContentType="none"
+                value={value}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onBlur, onChange, value } }) => (
+              <TextInput
+                autoCapitalize="none"
+                autoCompleteType="email"
+                autoCorrect={false}
+                keyboardType="email-address"
+                onBlur={onBlur}
+                onChangeText={onChange}
+                returnKeyType="next"
+                placeholder="E-mail" 
+                placeholderTextColor="#c4c3cb" 
+                style={styles.loginFormTextInput} 
+                textContentType="username"
+                value={value}
+              />
+            )}
+          />
+
+          <Controller
+          control={control}
+          name="senha"
+          render={({ field: { onBlur, onChange, value }}) => (
+            <TextInput
+              autoCapitalize="none"
+              autoCompleteType="password"
+              autoCorrect={false}
+              onBlur={onBlur}
+              onChangeText={onChange}
+              onSubmitEditing={onSubmit}
+              returnKeyType="done"
+              secureTextEntry
+              placeholder="Senha" 
+              placeholderTextColor="#c4c3cb" 
+              style={styles.loginFormTextInput} 
+              textContentType="password"
+              value={value}
+            />
+          )}
+          />
+            <Button
+              mode="contained"
+              style={styles.loginButton}
+              onPress={onSubmit}
+            >Salvar dados</Button>
         </View>
       </View>
     </TouchableWithoutFeedback>
