@@ -36,6 +36,13 @@ export default function NovoCadastroScreen() {
 
   const onSubmit = handleSubmit(({ nome, CPF, email, senha }) => {
     setLoading(true);
+    if (!nome || !CPF || !email || !senha) {
+      Alert.alert(
+        'Erro',
+        'Por favor, preencha todos os campos obrigatórios'
+      )
+      return;
+    }
     let model = {
       nome,
       CPF,
@@ -94,7 +101,7 @@ export default function NovoCadastroScreen() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 returnKeyType="next"
-                placeholder="Nome Completo" 
+                placeholder="Nome Completo *" 
                 placeholderTextColor="#c4c3cb" 
                 style={styles.loginFormTextInput} 
                 textContentType="name"
@@ -115,7 +122,7 @@ export default function NovoCadastroScreen() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 returnKeyType="next"
-                placeholder="CPF" 
+                placeholder="CPF *" 
                 placeholderTextColor="#c4c3cb" 
                 style={styles.loginFormTextInput} 
                 textContentType="none"
@@ -136,7 +143,7 @@ export default function NovoCadastroScreen() {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 returnKeyType="next"
-                placeholder="E-mail" 
+                placeholder="E-mail *" 
                 placeholderTextColor="#c4c3cb" 
                 style={styles.loginFormTextInput} 
                 textContentType="username"
@@ -158,7 +165,7 @@ export default function NovoCadastroScreen() {
               onSubmitEditing={onSubmit}
               returnKeyType="done"
               secureTextEntry
-              placeholder="Senha" 
+              placeholder="Senha *" 
               placeholderTextColor="#c4c3cb" 
               style={styles.loginFormTextInput} 
               textContentType="password"

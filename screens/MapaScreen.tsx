@@ -1,9 +1,9 @@
 import axios from 'axios';
 import * as React from 'react';
 import { createRef, useEffect, useState } from 'react';
-import { Alert, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Alert, StyleSheet, View, ActivityIndicator, Text, ScrollView } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { Button, Colors } from 'react-native-paper';
+import { Button, Checkbox, Colors, Dialog, Paragraph, Portal } from 'react-native-paper';
 import * as Location from 'expo-location';
 import Geocoder from 'react-native-geocoding';
 import { TextInput as RNTextInput } from 'react-native';
@@ -17,30 +17,41 @@ interface Postagem {
   latitude?: number;
   longitude?: number;
 }
+
+interface BairroFiltro {
+  bairro: string;
+  count: number;
+  checked: boolean;
+}
 type mapaScreenProp = StackNavigationProp<RootStackParamList, 'MapaScreen'>;
 
 export default function MapaScreen() {
   const navigation = useNavigation<mapaScreenProp>();
   const route = useRoute<RouteProp<RootStackParamList, 'MapaScreen'>>();
-
   const [posts, setPosts] = useState(null);
   const [loading, setLoading] = useState(false);
   const [text, setText] = React.useState('');
   const [location, setLocation] = useState(null);
-  const [time, setTime] = useState(Date.now());
-  const [selection, setSelection] = useState({
-    start: 0,
-    end: 0
-  });
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
-  var textInput = createRef<RNTextInput>();
+  const [filterModal, setModalFilter] = React.useState(false);
+  const [checked, setChecked] = React.useState(false);
+  const [bairros, setBairros] = React.useState(new Array<BairroFiltro>());
+
+  const showDialog = () => setModalFilter(true);
+  const hideDialog = () => setModalFilter(false);
+
+  function toggleBairroChecked(index: number) {
+    const newArray = [...bairros];
+    newArray[index].checked = !bairros[index].checked;
+    setBairros(newArray);
+  }
 
   // Initialize the module (needs to be done only once)
   Geocoder.init(key, {language : "pt"});
 
 
   useEffect(() => {
-    const interval = setInterval(() => atualizarMapa(), 5000);
+    const interval = setInterval(() => atualizarMapa(), 3000);
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -50,14 +61,11 @@ export default function MapaScreen() {
 
       await Location.getLastKnownPositionAsync()
       .then((pos) => {
-        //console.log(pos);
         setLocation(pos);
       });
-      //console.log(location);
       if (location) {
         Geocoder.from(location.coords.latitude, location.coords.longitude)
         .then(json => {
-          //console.log(json.results[0].formatted_address);
           setText(json.results[0].formatted_address);
         })
         .catch(error => console.warn(error));
@@ -84,12 +92,33 @@ export default function MapaScreen() {
       }
     })
       .then((response) => {
-        //console.log(response.data);
-        const bairros = response.data.dados.map(
-          (item: any) => { return item.bairro } 
+        const bairrosSelecionados = bairros.filter(x => x.checked);
+        let posts = [];
+        if (bairrosSelecionados.length > 0) {
+          const nomesBairros = bairrosSelecionados.map((item) => { return item.bairro });
+          posts = response.data.dados.filter((x: { bairro: string; }) => nomesBairros.includes(x.bairro));
+        } else {
+          posts = response.data.dados;
+        }
+
+        const arrayBairros = [...bairros];
+        arrayBairros.forEach((item) => item.count = 0);
+        response.data.dados.map(
+          (item: any) => { 
+            if (arrayBairros.filter(x => x.bairro == item.bairro).length > 0) {
+              const index = arrayBairros.findIndex(x => x.bairro == item.bairro);
+              arrayBairros[index].count++;
+            } else {
+              arrayBairros.push({
+                bairro: item.bairro,
+                count: 1,
+                checked: false
+              });
+            }
+          }
         );
-        //console.log(bairros);
-        setPosts(response.data.dados);
+        setBairros(arrayBairros);
+        setPosts(posts);
       })
       .catch((error) => {
         console.log('erro:' + error);
@@ -99,9 +128,10 @@ export default function MapaScreen() {
 
   function criarPostagem() {
     AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
-    .then((token) => {
-      if (token) {
-        navigation.navigate('NovaPostagemScreen');
+    .then(async (token) => {
+      const userData = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA');
+      if (token && userData) {
+          navigation.navigate('NovaPostagemScreen');
       } else {
         Alert.alert(
           'Aviso',
@@ -126,6 +156,42 @@ export default function MapaScreen() {
   
   return (
     <View style={styles.containerStyle}>
+    <Button 
+    style={styles.botaoFiltrarStyle}
+    compact={true} 
+    icon="filter"
+    mode="contained" 
+    onPress={showDialog}>
+        Filtros
+    </Button>
+    <Portal>
+      <Dialog visible={filterModal} onDismiss={hideDialog} style={styles.dialogStyle}>
+        <Dialog.Title>Filtros</Dialog.Title>
+        <Dialog.Content style={{height: '70%'}}>
+          <Dialog.ScrollArea style={{height: '70%'}}>
+            <ScrollView contentContainerStyle={{paddingHorizontal: 1}}>
+              <Text style={{fontSize: 14}}>Bairros</Text>
+              {bairros && bairros.map((item,index) => {
+                  return (
+                        <Checkbox.Item
+                        labelStyle={{ fontSize: 12}}
+                        key={index}
+                        color='rgba(91, 98, 143, 0.75)'
+                        label={`${item.bairro} (${item.count})`}
+                        status={item.checked === true ? 'checked' : 'unchecked'}
+                        onPress={() => toggleBairroChecked(index)}
+                      />
+                  );
+              })}
+            </ScrollView>
+          </Dialog.ScrollArea>
+
+        </Dialog.Content>
+        <Dialog.Actions>
+          <Button onPress={hideDialog}>Ok</Button>
+        </Dialog.Actions>
+      </Dialog>
+    </Portal>
     {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
     <MapView
       showsPointsOfInterest = {false}
@@ -148,8 +214,8 @@ export default function MapaScreen() {
             latitude: post.latitude,
             longitude: post.longitude
           }}
-          title={'hello'}
-          description={'test'}
+          title={`${post.titulo}`}
+          description={`${post.descricao}`}
         >
 
         </Marker>)
@@ -185,6 +251,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  dialogStyle: {
+    height: '70%'
+  },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -210,6 +279,20 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center"
   },
+  botaoFiltrarStyle: {
+    flex: 1,
+    flexDirection:'row',
+    position:'absolute',
+    top: 10,
+    right: 10,
+    alignSelf: "center",
+    justifyContent: "space-between",
+    //backgroundColor: "transparent",
+    backgroundColor: 'rgba(91, 98, 143, 0.75)',
+    borderWidth: 0.5,
+    borderRadius: 20,
+    zIndex: 9999
+  }
 });
 
 const customMapStyles = [

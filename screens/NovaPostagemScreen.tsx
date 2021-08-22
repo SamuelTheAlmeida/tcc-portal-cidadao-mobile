@@ -131,6 +131,13 @@ const navigation = useNavigation<novaPostagemScreenProp>();
   const onSubmit = handleSubmit(async ({ titulo, categoriaId, subcategoria, descricao }) => {
     setLoading(true);
     const userData = JSON.parse(await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA'));
+    if (!titulo || !categoriaId || !subcategoria || !descricao || !location || !userData) {
+      Alert.alert(
+        'Erro',
+        'Por favor, preencha todos os campos obrigatórios'
+      )
+      return;
+    }
     let model = {
       titulo,
       categoriaId: Number(categoriaId),
@@ -148,7 +155,6 @@ const navigation = useNavigation<novaPostagemScreenProp>();
 
     axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem', model)
     .then(response => {
-      console.log(response.data);
         if (response.status == 200) {
             Toast.show(response.data.mensagem.descricao, {
               duration: Toast.durations.LONG,
@@ -188,7 +194,6 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                             lng: resultLocation.lng
                         });
                     })
-                    //console.log(data.coords.latitude);
                   }}
                   query={{
                     key: key,
@@ -286,20 +291,6 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                   control={control}
                   name="subcategoria"
                   render={({ field: { onBlur, onChange, value } }) => (
-                    /*<TextInput
-                      autoCapitalize="none"
-                      autoCompleteType="off"
-                      autoCorrect={true}
-                      keyboardType="default"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      returnKeyType="next"
-                      placeholder="Subcategoria *" 
-                      placeholderTextColor="#c4c3cb" 
-                      style={styles.formTextInput} 
-                      textContentType="none"
-                      value={value.toString()}
-                    />*/
                     <View style={styles.formSelectInput}>
                       <Picker
                       onValueChange={onChange}
