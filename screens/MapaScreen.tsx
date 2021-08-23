@@ -10,6 +10,8 @@ import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ImageURISource } from 'react-native';
+var greenDot = require("../assets/images/green-dot.png");
 
 interface BairroFiltro {
   bairro: string;
@@ -45,6 +47,7 @@ export default function MapaScreen() {
 
 
   useEffect(() => {
+    atualizarMapa();
     const interval = setInterval(() => atualizarMapa(), 5000);
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -72,6 +75,17 @@ export default function MapaScreen() {
         clearInterval(interval);
       };
   }, []); // "[]" makes sure the effect will run only once.
+
+  function obterIconeMarker(post: any): ImageURISource {
+    switch (post.subcategoria.codigo) {
+      case 1:
+        return require('../assets/images/red-dot.v1.png');
+      case 2:
+        return require('../assets/images/yellow-dot.v1.png');
+      case 3:
+        return require('../assets/images/green-dot.v1.png');
+    }
+  }
 
   function atualizarMapa() {
     setLoading(true);
@@ -213,6 +227,7 @@ export default function MapaScreen() {
           }}
           title={`${post.titulo}`}
           description={`${post.descricao}`}
+          image={obterIconeMarker(post)}
         >
 
         </Marker>)
