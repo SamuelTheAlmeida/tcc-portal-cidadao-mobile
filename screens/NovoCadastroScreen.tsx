@@ -9,8 +9,6 @@ import { RootStackParamList } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
-import JWT from 'expo-jwt';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface FormData {
   nome: string;

@@ -27,10 +27,20 @@
         "backgroundColor": "#ffffff"
       },
       "config": {
-         "googleMaps": { "apiKey": "AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg" }   
+        "googleMaps": {
+          "apiKey": "AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg"
+        }
       },
-      "permissions": [ "CAMERA", "WRITE_EXTERNAL_STORAGE", "CAMERA_ROLL", "ACCESS_NETWORK_STATE"],
-      "softwareKeyboardLayoutMode": "pan"
+      "permissions": [
+        "CAMERA",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA_ROLL",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "softwareKeyboardLayoutMode": "pan",
+      "package": "portalcidadao.apk"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

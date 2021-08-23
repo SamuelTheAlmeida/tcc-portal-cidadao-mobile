@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, ActivityIndicator, Alert, Text, TextInput } from 'react-native';
-import { Button, Colors, Headline } from 'react-native-paper';
+import { Button, Colors } from 'react-native-paper';
 import Geocoder from 'react-native-geocoding';
 import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
 import axios from 'axios';
@@ -11,25 +11,13 @@ import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
-import {Picker} from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface EnumModel {
-  codigo: string;
-  nome: string;
-  descricao: string;
-}
-
-interface CategoriaModel {
-  id: number;
-  nome: string;
-  descricao: string;
-}
+import DropDown from "react-native-paper-dropdown";
 
 interface Postagem {
   titulo: string;
   categoriaId: number; //mudar para CategoriaModel
-  subcategoria: string; //mudar para EnumModel
+  subcategoria: number; //mudar para EnumModel
   descricao: string;
   imagemUrl: string;
   latitude: number;
@@ -42,7 +30,6 @@ type novaPostagemScreenProp = StackNavigationProp<RootStackParamList, 'NovaPosta
 export default function MapaScreen() {
 const navigation = useNavigation<novaPostagemScreenProp>();
 
-  const [modalVisible, setModalVisible] = useState(false);
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState(null);
@@ -53,7 +40,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
     defaultValues: {
       titulo: '',
       categoriaId: 0,
-      subcategoria: '',
+      subcategoria: 0,
       descricao: '',
       imagemUrl: '',
       latitude: 0,
@@ -62,6 +49,22 @@ const navigation = useNavigation<novaPostagemScreenProp>();
       usuarioId: 0
     },
   });
+  const [showDropDownCategoria, setShowDropDownCategoria] = useState(false);
+  const [showDropDownSubcategoria, setShowDropDownSubcategoria] = useState(false);
+  const subcategoriaList = [
+    {
+      label: "Reclamação",
+      value: "1",
+    },
+    {
+      label: "Elogio",
+      value: "2",
+    },
+    {
+      label: "Sugestão",
+      value: "3",
+    },
+  ]
 
   Geocoder.init(key, {language : "pt"});
   (async () => {
@@ -119,7 +122,14 @@ const navigation = useNavigation<novaPostagemScreenProp>();
     axios.get('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem/categorias')
     .then(response => {
         if (response.status == 200 && response.data) {
-            setCategorias(response.data.dados);
+            const categoriasMap = response.data.dados.map((item: any, index: number) => {
+              return {
+                key: index,
+                label: item.nome,
+                value: item.id
+              }
+            });
+            setCategorias(categoriasMap);
         }
     })
     .catch((err) => {
@@ -136,6 +146,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
         'Erro',
         'Por favor, preencha todos os campos obrigatórios'
       )
+      setLoading(false);
       return;
     }
     let model = {
@@ -155,16 +166,24 @@ const navigation = useNavigation<novaPostagemScreenProp>();
 
     axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem', model)
     .then(response => {
+      console.log(response);
         if (response.status == 200) {
             Toast.show(response.data.mensagem.descricao, {
               duration: Toast.durations.LONG,
               position: Toast.positions.BOTTOM
             });
             navigation.navigate('Root');
+        } else {
+          if (response.data.mensagem?.descricao) {
+            Alert.alert(response.data.mensagem.descricao);
+          } else {
+            Alert.alert(JSON.stringify(response.data));
+          }
         }
     })
     .catch((err) => {
-        console.log(err);
+      console.log(err);
+        //Alert.alert(err);
     })
     .finally(() => setLoading(false));
 
@@ -190,9 +209,10 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                     Geocoder.from(data.description).then((result) => {
                         let resultLocation = result.results[0].geometry.location;
                         setLocation({
-                            lat: resultLocation.lat,
-                            lng: resultLocation.lng
-                        });
+                          lat: resultLocation.lat,
+                          lng: resultLocation.lng,
+                          bairro: result.results[0]?.address_components[2]?.long_name
+                      });
                     })
                   }}
                   query={{
@@ -237,8 +257,8 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                 compact={true} 
                 icon="close" 
                 mode="outlined" 
-                onPress={() => { console.log('Pressed'); googlePlacesAutocompleteRef.current.setAddressText(''); }}>
-                    Limpar
+                onPress={() => { googlePlacesAutocompleteRef.current.setAddressText(''); }}>
+                    <Text>Limpar</Text>
                 </Button>
 
                 <Controller
@@ -254,66 +274,47 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                       onChangeText={onChange}
                       returnKeyType="next"
                       placeholder="Título *" 
-                      placeholderTextColor="#c4c3cb" 
+                      placeholderTextColor="rgba(0, 0, 0, 0.6)" 
                       style={styles.formTextInput} 
                       textContentType="none"
                       value={value}
                     />
                   )}
                 />
-                <Controller
+               <Controller
                   control={control}
                   name="categoriaId"
                   render={({ field: { onBlur, onChange, value } }) => (
-                    <View style={styles.formSelectInput}>
-                      <Picker
-                        onValueChange={onChange}
-                        selectedValue={value}
-                        style={styles.formSelectInput}
-                        itemStyle={styles.formSelectInput}
-                      >
-                        {categorias.map((item,index) => {
-                            return (
-                                <Picker.Item
-                                    key={index} 
-                                    style={styles.formSelectInputItem}
-                                    label = {`${item.nome}`} 
-                                    value={item.id}
-                                />
-                            );
-                        })}
-                      </Picker>
+                    <View>
+                      {categorias.length > 0 &&
+                    <DropDown
+                      label={"Categoria *"}
+                      mode={"outlined"}
+                      visible={showDropDownCategoria}
+                      showDropDown={() => setShowDropDownCategoria(true)}
+                      onDismiss={() => setShowDropDownCategoria(false)}
+                      value={value}
+                      setValue={onChange}
+                      list={categorias}
+                    />}
                     </View>
-
                   )}
                 />
                 <Controller
                   control={control}
                   name="subcategoria"
                   render={({ field: { onBlur, onChange, value } }) => (
-                    <View style={styles.formSelectInput}>
-                      <Picker
-                      onValueChange={onChange}
-                      selectedValue={1}
-                      style={styles.formSelectInput}
-                      itemStyle={styles.formSelectInput}
-                      >
-                        <Picker.Item
-                            style={styles.formSelectInputItem}
-                            label='Reclamação' 
-                            value='1'
-                        />
-                        <Picker.Item
-                            style={styles.formSelectInputItem}
-                            label='Elogio' 
-                            value='2'
-                        />
-                        <Picker.Item
-                            style={styles.formSelectInputItem}
-                            label='Sugestão' 
-                            value='3'
-                        />
-                      </Picker>
+                    <View>
+                      <DropDown
+                        label={"Subcategoria *"}
+                        mode={"outlined"}
+                        visible={showDropDownSubcategoria}
+                        showDropDown={() => setShowDropDownSubcategoria(true)}
+                        onDismiss={() => setShowDropDownSubcategoria(false)}
+                        value={value}
+                        setValue={onChange}
+                        list={subcategoriaList}
+                      />
                     </View>
 
                   )}
@@ -331,7 +332,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                       onChangeText={onChange}
                       returnKeyType="next"
                       placeholder="Descrição *" 
-                      placeholderTextColor="#c4c3cb" 
+                      placeholderTextColor="rgba(0, 0, 0, 0.6)"
                       style={styles.formMultilineInput} 
                       textContentType="none"
                       value={value.toString()}
@@ -347,13 +348,13 @@ const navigation = useNavigation<novaPostagemScreenProp>();
                 mode="contained" 
                 onPress={onSubmit}
                 >
-                    Salvar
+                    <Text>Salvar</Text>
                     </Button>
                 <Button 
                 color="#3897f1"
                 style={styles.modalRightButtonStyle}
                 onPress={() => navigation.navigate('Root')}>
-                    Voltar
+                    <Text>Voltar</Text>
                 </Button>
             </View>
           </View>
@@ -386,50 +387,47 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   formTextInput: {
-    height: 43,
+    height: 50,
     fontSize: 14,
-    borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#eaeaea',
-    backgroundColor: '#fafafa',
+    borderColor: 'black',
+    backgroundColor: 'rgba(220, 220, 220, 0.1)',
     paddingLeft: 10,
     marginTop: 5,
     marginBottom: 5,
-    color: 'black'
+    color: 'rgba(0, 0, 0, 0.6)'
     /*marginLeft: 15,
     marginRight: 15,
 */
   },
   formSelectInput: {
-    height: 43,
+    height: 50,
     fontSize: 14,
-    borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#eaeaea',
-    backgroundColor: '#fafafa',
+    borderColor: '#000',
+    backgroundColor: 'rgba(220, 220, 220, 0.1)',
     //paddingLeft: 10,
     marginTop: 5,
     marginBottom: 5,
-    color: '#c4c3cb' 
+    color: 'rgba(0, 0, 0, 0.6)' 
   },
   formSelectInputItem: {
-    height: 43,
+    height: 50,
     fontSize: 14,
-    borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#eaeaea',
-    backgroundColor: '#fafafa',
+    borderColor: '#000',
+    backgroundColor: 'rgba(220, 220, 220, 0.1)',
     paddingLeft: 10,
     marginTop: 5,
     marginBottom: 5,
-    color: '#c4c3cb' 
+    color: 'rgba(0, 0, 0, 0.6)' 
   },
   formMultilineInput: {
     fontSize: 14,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#eaeaea',
-    backgroundColor: '#fafafa',
+    borderColor: '#000',
+    backgroundColor: 'rgba(220, 220, 220, 0.1)',
     paddingLeft: 10,
     marginTop: 5,
     marginBottom: 5

@@ -9,7 +9,6 @@ import { RootStackParamList } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
-import JWT from 'expo-jwt';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface FormData {
@@ -33,16 +32,19 @@ export default function ContaScreen() {
   useEffect(() => {
     AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
     .then((token) => {
-      if (token) {
-        console.log('user already logged in');
-        //console.log(JWT.decode(token, 'c3ecf6c5baf0b269698c385e4a647f3e', { timeSkew: 30 }));
-        /*AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA').then(
-          userData => setUserData(JSON.parse(userData))
-        );*/
-      } else {
-        console.log('user not authenticated');
-      }
-    });
+      AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA').then
+      ((userData) => {
+        if (token && userData) {
+          setUserData(JSON.parse(userData));
+          console.log('user already logged in');
+        } else {
+          setUserData(null);
+          console.log('user not authenticated');
+        }
+      })
+
+    })
+    .catch((err) => console.log(err));
   }, []); // "[]" makes sure the effect will run only once.
 
   async function logout() {

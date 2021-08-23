@@ -1,22 +1,15 @@
 import axios from 'axios';
 import * as React from 'react';
-import { createRef, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View, ActivityIndicator, Text, ScrollView } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { Button, Checkbox, Colors, Dialog, Paragraph, Portal } from 'react-native-paper';
+import { Button, Checkbox, Colors, Dialog, Portal } from 'react-native-paper';
 import * as Location from 'expo-location';
 import Geocoder from 'react-native-geocoding';
-import { TextInput as RNTextInput } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface Postagem {
-  id: number;
-  latitude?: number;
-  longitude?: number;
-}
 
 interface BairroFiltro {
   bairro: string;
@@ -34,8 +27,9 @@ export default function MapaScreen() {
   const [location, setLocation] = useState(null);
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
   const [filterModal, setModalFilter] = React.useState(false);
-  const [checked, setChecked] = React.useState(false);
   const [bairros, setBairros] = React.useState(new Array<BairroFiltro>());
+  const bairrosRef = React.useRef([]);
+  bairrosRef.current = bairros;
 
   const showDialog = () => setModalFilter(true);
   const hideDialog = () => setModalFilter(false);
@@ -51,7 +45,7 @@ export default function MapaScreen() {
 
 
   useEffect(() => {
-    const interval = setInterval(() => atualizarMapa(), 3000);
+    const interval = setInterval(() => atualizarMapa(), 5000);
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -59,16 +53,17 @@ export default function MapaScreen() {
         return;
       }
 
-      await Location.getLastKnownPositionAsync()
+      await Location.getCurrentPositionAsync()
       .then((pos) => {
         setLocation(pos);
-      });
+      })
+      .catch(error => Alert.alert(error));
       if (location) {
         Geocoder.from(location.coords.latitude, location.coords.longitude)
         .then(json => {
           setText(json.results[0].formatted_address);
         })
-        .catch(error => console.warn(error));
+        .catch(error => Alert.alert(error));
       }
 
     })();
@@ -92,16 +87,16 @@ export default function MapaScreen() {
       }
     })
       .then((response) => {
-        const bairrosSelecionados = bairros.filter(x => x.checked);
+        const bairrosSelecionados = bairrosRef.current.filter(x => x.checked);
+        const nomesBairros = bairrosSelecionados.map((item) => { return item.bairro });
         let posts = [];
         if (bairrosSelecionados.length > 0) {
-          const nomesBairros = bairrosSelecionados.map((item) => { return item.bairro });
           posts = response.data.dados.filter((x: { bairro: string; }) => nomesBairros.includes(x.bairro));
         } else {
           posts = response.data.dados;
         }
 
-        const arrayBairros = [...bairros];
+        const arrayBairros = [...bairrosRef.current];
         arrayBairros.forEach((item) => item.count = 0);
         response.data.dados.map(
           (item: any) => { 
@@ -109,10 +104,11 @@ export default function MapaScreen() {
               const index = arrayBairros.findIndex(x => x.bairro == item.bairro);
               arrayBairros[index].count++;
             } else {
+              const isAlreadyChecked = nomesBairros.includes(item.bairro);
               arrayBairros.push({
                 bairro: item.bairro,
                 count: 1,
-                checked: false
+                checked: isAlreadyChecked
               });
             }
           }
@@ -121,7 +117,7 @@ export default function MapaScreen() {
         setPosts(posts);
       })
       .catch((error) => {
-        console.log('erro:' + error);
+        Alert.alert(error);
       })
       .finally(() => setLoading(false));
   }
@@ -151,7 +147,8 @@ export default function MapaScreen() {
           { cancelable: true },
           );
       }
-    });
+    })
+    .catch(error => Alert.alert(error));
   }
   
   return (
@@ -188,7 +185,7 @@ export default function MapaScreen() {
 
         </Dialog.Content>
         <Dialog.Actions>
-          <Button onPress={hideDialog}>Ok</Button>
+          <Button onPress={() => { hideDialog(); atualizarMapa(); } }>Ok</Button>
         </Dialog.Actions>
       </Dialog>
     </Portal>
