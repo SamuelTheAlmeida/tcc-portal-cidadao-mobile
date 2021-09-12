@@ -6,23 +6,35 @@
 export type RootStackParamList = {
   Root: {};
   NotFound: undefined;
-  ContaScreen: undefined;
+  ContaScreen: {};
   MapaScreen: {};
-  NovaPostagemScreen: undefined;
-  NovoCadastroScreen: undefined;
+  NovaPostagemScreen: {};
+  NovoCadastroScreen: {};
 };
 
 export type BottomTabParamList = {
+  Root: {};
+  NotFound: undefined;
+  ContaScreen: {};
   MapaScreen: {};
-  NovaPostagemScreen: undefined;
-  ContaScreen: undefined;
-  NovoCadastroScreen: undefined;
+  NovaPostagemScreen: {};
+  NovoCadastroScreen: {};
 };
 
 export type TabOneParamList = {
-  MapaScreen: undefined;
+  Root: {};
+  NotFound: undefined;
+  ContaScreen: {};
+  MapaScreen: {};
+  NovaPostagemScreen: {};
+  NovoCadastroScreen: {};
 };
 
 export type TabTwoParamList = {
-  ContaScreen: undefined;
+  Root: {};
+  NotFound: undefined;
+  ContaScreen: {};
+  MapaScreen: {};
+  NovaPostagemScreen: {};
+  NovoCadastroScreen: {};
 };

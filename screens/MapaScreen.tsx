@@ -25,6 +25,7 @@ export default function MapaScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'MapaScreen'>>();
   const [posts, setPosts] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [gotLocation, setGotLocation] = useState(false);
   const [text, setText] = React.useState('');
   const [location, setLocation] = useState(null);
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
@@ -56,18 +57,20 @@ export default function MapaScreen() {
         return;
       }
 
-      await Location.getCurrentPositionAsync()
+      recallCurrentLocationFunction();
+      /*await Location.getCurrentPositionAsync()
       .then((pos) => {
         setLocation(pos);
       })
-      .catch(error => Alert.alert(error));
+      .catch(error => Alert.alert(error.message));
       if (location) {
         Geocoder.from(location.coords.latitude, location.coords.longitude)
         .then(json => {
           setText(json.results[0].formatted_address);
         })
-        .catch(error => Alert.alert(error));
-      }
+        .catch(error => Alert.alert(error.message));
+      }*/
+
 
     })();
 
@@ -75,6 +78,29 @@ export default function MapaScreen() {
         clearInterval(interval);
       };
   }, []); // "[]" makes sure the effect will run only once.
+
+  async function getCurrentLocation() {
+      try {
+          let locat = await Location.getCurrentPositionAsync({
+              accuracy: 6
+          });
+          setLocation(locat);
+          setGotLocation(true);
+          console.log(locat);
+          Geocoder.from(locat.coords.latitude, locat.coords.longitude)
+          .then(json => {
+            setText(json.results[0].formatted_address);
+          })
+          .catch(error => Alert.alert(error.message));
+      } catch (err) {
+          console.log("Couldn't get locations. Error: " + err);
+          recallCurrentLocationFunction();
+      }
+  };
+
+  function recallCurrentLocationFunction() {
+      getCurrentLocation();
+  };
 
   function obterIconeMarker(post: any): ImageURISource {
     switch (post.subcategoria.codigo) {
@@ -154,7 +180,9 @@ export default function MapaScreen() {
             },
             {
               text: "Ir para login",
-              onPress: () => navigation.navigate('ContaScreen'),
+              onPress: () => navigation.navigate('ContaScreen', {
+                returnScreen: 'NovaPostagemSreen'
+              }),
               style: "default",
             }
           ],
@@ -162,7 +190,7 @@ export default function MapaScreen() {
           );
       }
     })
-    .catch(error => Alert.alert(error));
+    .catch(error => Alert.alert(error.message));
   }
   
   return (
@@ -295,7 +323,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection:'row',
     position:'absolute',
-    top: 10,
+    top: 30,
     right: 10,
     alignSelf: "center",
     justifyContent: "space-between",

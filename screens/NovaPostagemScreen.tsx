@@ -27,8 +27,10 @@ interface Postagem {
 }
 
 type novaPostagemScreenProp = StackNavigationProp<RootStackParamList, 'NovaPostagemScreen'>;
-export default function MapaScreen() {
+const NovaPostagemScreen=(props: any) => {
 const navigation = useNavigation<novaPostagemScreenProp>();
+  const returnScreen = props?.route?.params?.returnScreen ?? 'MapaScreen';
+  console.log(returnScreen);
 
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -74,7 +76,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
       return;
     }
 
-    await Location.getCurrentPositionAsync()
+    await Location.getCurrentPositionAsync({ accuracy: 1 })
     .then((pos) => {
       if (pos) {
         Geocoder.from(pos.coords.latitude, pos.coords.longitude)
@@ -172,7 +174,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
               duration: Toast.durations.LONG,
               position: Toast.positions.BOTTOM
             });
-            navigation.navigate('Root');
+            navigation.navigate(returnScreen);
         } else {
           if (response.data.mensagem?.descricao) {
             Alert.alert(response.data.mensagem.descricao);
@@ -194,7 +196,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
     {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
-            <Text style={styles.logoText}>Nova Postagem</Text>
+            {/* <Text style={styles.logoText}>Nova Postagem</Text> */}
             <View style={styles.autocompleteView}>
                 <GooglePlacesAutocomplete
                 suppressDefaultStyles={true}
@@ -474,3 +476,4 @@ const styles = StyleSheet.create({
   }
 });
 
+export default NovaPostagemScreen; 

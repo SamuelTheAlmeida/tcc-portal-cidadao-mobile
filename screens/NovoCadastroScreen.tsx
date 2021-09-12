@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as React from 'react';
-import { useState } from 'react';
+import { createRef, MutableRefObject, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import {Keyboard, Text, View, TextInput, TouchableWithoutFeedback, Alert, KeyboardAvoidingView} from 'react-native';
 import { ActivityIndicator, Button, Colors } from 'react-native-paper';
@@ -9,6 +9,7 @@ import { RootStackParamList } from '../types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
+import { TextInputMask } from 'react-native-masked-text';
 
 interface FormData {
   nome: string;
@@ -32,6 +33,10 @@ export default function NovoCadastroScreen() {
     },
   });
 
+  var refCpfInput = createRef<any>();
+  var refEmailInput = useRef<any>();
+  var refSenhaInput = useRef<any>();
+
   const onSubmit = handleSubmit(({ nome, CPF, email, senha }) => {
     setLoading(true);
     if (!nome || !CPF || !email || !senha) {
@@ -41,9 +46,10 @@ export default function NovoCadastroScreen() {
       )
       return;
     }
+    let cleanCPF = CPF.replace(/\D/g,'');
     let model = {
       nome,
-      CPF,
+      CPF: cleanCPF,
       email,
       senha,
       perfilId: 2 // usuario padrão (cidadão)
@@ -62,7 +68,7 @@ export default function NovoCadastroScreen() {
             });
             navigation.navigate('ContaScreen');
           } else {
-            Alert.alert('Dados inválidos');
+            Alert.alert(response.data?.mensagem?.descricao);
           }
             
         } else {
@@ -92,10 +98,9 @@ export default function NovoCadastroScreen() {
             name="nome"
             render={({ field: { onBlur, onChange, value } }) => (
               <TextInput
-                autoCapitalize="none"
+                autoCapitalize="characters"
                 autoCompleteType="name"
                 autoCorrect={true}
-                keyboardType="default"
                 onBlur={onBlur}
                 onChangeText={onChange}
                 returnKeyType="next"
@@ -104,6 +109,8 @@ export default function NovoCadastroScreen() {
                 style={styles.loginFormTextInput} 
                 textContentType="name"
                 value={value}
+                maxLength={100}
+                onSubmitEditing={() => refCpfInput?.current._inputElement.focus()}
               />
             )}
           />
@@ -112,20 +119,24 @@ export default function NovoCadastroScreen() {
             control={control}
             name="CPF"
             render={({ field: { onBlur, onChange, value } }) => (
-              <TextInput
-                autoCapitalize="none"
-                autoCompleteType="off"
-                autoCorrect={false}
-                keyboardType="number-pad"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                returnKeyType="next"
-                placeholder="CPF *" 
-                placeholderTextColor="#c4c3cb" 
-                style={styles.loginFormTextInput} 
-                textContentType="none"
-                value={value}
-              />
+              <TextInputMask
+              autoCapitalize="none"
+              autoCompleteType="off"
+              autoCorrect={false}
+              keyboardType="number-pad"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              returnKeyType="next"
+              placeholder="CPF *" 
+              placeholderTextColor="#c4c3cb" 
+              style={styles.loginFormTextInput} 
+              textContentType="none"
+              value={value}
+              type={'cpf'}
+              maxLength={14}
+              ref={refCpfInput}
+              onSubmitEditing={() => refEmailInput?.current.focus()}
+            />
             )}
           />
 
@@ -146,6 +157,9 @@ export default function NovoCadastroScreen() {
                 style={styles.loginFormTextInput} 
                 textContentType="username"
                 value={value}
+                onSubmitEditing={() => refSenhaInput?.current.focus()}
+                ref={refEmailInput}
+                maxLength={100}
               />
             )}
           />
@@ -168,6 +182,8 @@ export default function NovoCadastroScreen() {
               style={styles.loginFormTextInput} 
               textContentType="password"
               value={value}
+              ref={refSenhaInput}
+              maxLength={32}
             />
           )}
           />

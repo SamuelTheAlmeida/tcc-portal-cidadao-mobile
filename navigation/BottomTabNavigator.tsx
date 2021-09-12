@@ -14,6 +14,7 @@ import MapaScreen from '../screens/MapaScreen';
 import ContaScreen from '../screens/ContaScreen';
 import { BottomTabParamList, TabOneParamList, TabTwoParamList } from '../types';
 import NovaPostagemScreen from '../screens/NovaPostagemScreen';
+import NovoCadastroScreen from '../screens/NovoCadastroScreen';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -56,12 +57,31 @@ const TabOneStack = createStackNavigator<TabOneParamList>();
 
 function TabOneNavigator() {
   return (
-    <TabOneStack.Navigator>
+    <TabOneStack.Navigator screenOptions={{ 
+      headerTitleAlign: 'center',
+      headerTransparent: true
+      }}>
       <TabOneStack.Screen
-        name="MapaScreen"
-        component={MapaScreen}
-        options={{ headerTitle: 'Portal Cidadão' }}
+        name="MapaScreen"component={MapaScreen} options={{ 
+          headerTitle: 'Portal Cidadão',
+          headerShown: false 
+        }}
       />
+      <TabOneStack.Screen
+        name="ContaScreen"
+        component={ContaScreen}
+        options={{ 
+          headerTitle: 'Conta', 
+          headerShown: false 
+        }}
+      />
+      <TabOneStack.Screen name="NovaPostagemScreen" component={NovaPostagemScreen} options={{ 
+        headerTitle: 'Nova Postagem' 
+        }} 
+      />
+      <TabOneStack.Screen name="NovoCadastroScreen" component={NovoCadastroScreen} options={{ 
+        headerTitle: 'Novo Cadastro' 
+        }}/>
     </TabOneStack.Navigator>
   );
 }
@@ -70,12 +90,32 @@ const TabTwoStack = createStackNavigator<TabTwoParamList>();
 
 function TabTwoNavigator() {
   return (
-    <TabTwoStack.Navigator>
+    <TabTwoStack.Navigator screenOptions={{ 
+      headerTitleAlign: 'center', 
+      headerTransparent: true 
+      }}>
       <TabTwoStack.Screen
         name="ContaScreen"
         component={ContaScreen}
-        options={{ headerTitle: 'Portal Cidadão' }}
+        options={{ 
+          headerTitle: 'Conta', 
+          headerShown: false 
+        }}
       />
+      <TabTwoStack.Screen
+        name="MapaScreen"component={MapaScreen} options={{ 
+          headerTitle: 'Portal Cidadão',
+          headerShown: false 
+        }}
+      />
+
+      <TabTwoStack.Screen name="NovaPostagemScreen" component={NovaPostagemScreen} options={{ 
+        headerTitle: 'Nova Postagem' 
+        }} 
+      />
+      <TabTwoStack.Screen name="NovoCadastroScreen" component={NovoCadastroScreen} options={{ 
+        headerTitle: 'Novo Cadastro' 
+        }}/>
     </TabTwoStack.Navigator>
   );
 }

@@ -17,7 +17,9 @@ interface FormData {
 }
 
 type ContaScreenProp = StackNavigationProp<RootStackParamList, 'ContaScreen'>;
-export default function ContaScreen() {
+const ContaScreen=(props: any) => {
+  const returnScreen = props?.route?.params?.returnScreen ?? 'MapaScreen';
+  console.log(returnScreen);
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const navigation = useNavigation<ContaScreenProp>();
@@ -182,7 +184,7 @@ export default function ContaScreen() {
               >Entrar como visitante</Button>
               <Button
                 style={styles.fbLoginButton}
-                onPress={() => navigation.navigate('NovoCadastroScreen')}
+                onPress={() => navigation.navigate('NovoCadastroScreen', { returnScreen: returnScreen })}
                 color="#3897f1"
               >Novo Cadastro</Button> 
               {/* <Button
@@ -254,3 +256,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   }
 });
+
+export default ContaScreen;
