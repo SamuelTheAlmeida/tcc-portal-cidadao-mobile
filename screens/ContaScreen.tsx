@@ -10,6 +10,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AuthService from '../service/AuthService';
 
 interface FormData {
   login: string;
@@ -33,7 +34,19 @@ const ContaScreen=(props: any) => {
   });
 
   useEffect(() => {
-    AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
+    const loggedUser = AuthService.getLoggedUser();
+    if (loggedUser) {
+      console.log(loggedUser);
+      setUserData(loggedUser);
+      console.log('user already logged in');
+    } else {
+      setUserData(null);
+      console.log('user not authenticated');
+    }
+    
+    setReady(true);
+
+    /*AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
     .then((token) => {
       AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA').then
       ((userData) => {
@@ -49,7 +62,7 @@ const ContaScreen=(props: any) => {
       })
 
     })
-    .catch((err) => console.log(err));
+    .catch((err) => console.log(err));*/
   }, []); // "[]" makes sure the effect will run only once.
 
   async function logout() {
@@ -203,7 +216,6 @@ const ContaScreen=(props: any) => {
       } else {
         return (<ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />)
       }
-
     }
 
 }

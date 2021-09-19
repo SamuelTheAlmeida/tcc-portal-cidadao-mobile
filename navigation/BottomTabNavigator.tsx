@@ -15,15 +15,18 @@ import ContaScreen from '../screens/ContaScreen';
 import { BottomTabParamList, TabOneParamList, TabTwoParamList } from '../types';
 import NovaPostagemScreen from '../screens/NovaPostagemScreen';
 import NovoCadastroScreen from '../screens/NovoCadastroScreen';
+import AuthService from '../service/AuthService';
 
 const BottomTab = createBottomTabNavigator<BottomTabParamList>();
 
 export default function BottomTabNavigator() {
+  const loggedUser = AuthService.getLoggedUser();
+  const initialRouteName = loggedUser ? 'MapaScreen' : 'ContaScreen';
   const colorScheme = useColorScheme();
 
   return (
     <BottomTab.Navigator
-      initialRouteName='ContaScreen'
+      initialRouteName={initialRouteName}
       tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}>
       <BottomTab.Screen
         name="MapaScreen"
