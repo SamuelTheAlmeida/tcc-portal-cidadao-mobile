@@ -22,6 +22,7 @@ const ContaScreen=(props: any) => {
   console.log(returnScreen);
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [ready, setReady] = useState(false);
   const navigation = useNavigation<ContaScreenProp>();
 
   const { control, handleSubmit } = useForm<FormData>({
@@ -43,6 +44,8 @@ const ContaScreen=(props: any) => {
           setUserData(null);
           console.log('user not authenticated');
         }
+
+        setReady(true);
       })
 
     })
@@ -96,7 +99,8 @@ const ContaScreen=(props: any) => {
   });
 
     if (userData) {
-      return (        <KeyboardAvoidingView 
+      return (        
+      <KeyboardAvoidingView 
         keyboardVerticalOffset={20}
         style={styles.containerView} 
         behavior="padding">
@@ -118,85 +122,88 @@ const ContaScreen=(props: any) => {
         </TouchableWithoutFeedback>
         </KeyboardAvoidingView>)
     } else {
-      return (
-        <KeyboardAvoidingView 
-        keyboardVerticalOffset={20}
-        style={styles.containerView} 
-        behavior="padding">
-        {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
-    
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.loginScreenContainer}>
-            <View style={styles.loginFormView}>
-            <Text style={styles.logoText}>Portal Cidadão</Text>
-    
-            <Controller
-              control={control}
-              name="login"
-              render={({ field: { onBlur, onChange, value } }) => (
-                <TextInput
-                  autoCapitalize="none"
-                  autoCompleteType="email"
-                  autoCorrect={false}
-                  keyboardType="email-address"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  returnKeyType="next"
-                  placeholder="E-mail ou CPF" 
-                  placeholderTextColor="#c4c3cb" 
-                  style={styles.loginFormTextInput} 
-                  textContentType="username"
-                  value={value}
+      if (ready) {
+        return (
+          <KeyboardAvoidingView 
+          keyboardVerticalOffset={20}
+          style={styles.containerView} 
+          behavior="padding">
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.loginScreenContainer}>
+                <View style={styles.loginFormView}>
+                <Text style={styles.logoText}>Portal Cidadão</Text>
+        
+                <Controller
+                  control={control}
+                  name="login"
+                  render={({ field: { onBlur, onChange, value } }) => (
+                    <TextInput
+                      autoCapitalize="none"
+                      autoCompleteType="email"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      returnKeyType="next"
+                      placeholder="E-mail ou CPF" 
+                      placeholderTextColor="#c4c3cb" 
+                      style={styles.loginFormTextInput} 
+                      textContentType="username"
+                      value={value}
+                    />
+                  )}
                 />
-              )}
-            />
-    
-            <Controller
-            control={control}
-            name="senha"
-            render={({ field: { onBlur, onChange, value }}) => (
-              <TextInput
-                autoCapitalize="none"
-                autoCompleteType="password"
-                autoCorrect={false}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                onSubmitEditing={onSubmit}
-                returnKeyType="done"
-                secureTextEntry
-                placeholder="Senha" 
-                placeholderTextColor="#c4c3cb" 
-                style={styles.loginFormTextInput} 
-                textContentType="password"
-                value={value}
-              />
-            )}
-            />
-              <Button
-                style={styles.loginButton}
-                mode="contained"
-                onPress={onSubmit}
-              >Login</Button>
-              <Button
-                style={styles.fbLoginButton}
-                onPress={() => navigation.navigate('MapaScreen')}
-                color="#3897f1"
-              >Entrar como visitante</Button>
-              <Button
-                style={styles.fbLoginButton}
-                onPress={() => navigation.navigate('NovoCadastroScreen', { returnScreen: returnScreen })}
-                color="#3897f1"
-              >Novo Cadastro</Button> 
-              {/* <Button
-                style={styles.fbLoginButton}
-                onPress={() => console.log("pressed login FB!!")}
-                color="#3897f1"
-              >Login with Facebook</Button> */}
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
-      );
+        
+                <Controller
+                control={control}
+                name="senha"
+                render={({ field: { onBlur, onChange, value }}) => (
+                  <TextInput
+                    autoCapitalize="none"
+                    autoCompleteType="password"
+                    autoCorrect={false}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    onSubmitEditing={onSubmit}
+                    returnKeyType="done"
+                    secureTextEntry
+                    placeholder="Senha" 
+                    placeholderTextColor="#c4c3cb" 
+                    style={styles.loginFormTextInput} 
+                    textContentType="password"
+                    value={value}
+                  />
+                )}
+                />
+                  <Button
+                    style={styles.loginButton}
+                    mode="contained"
+                    onPress={onSubmit}
+                  >Login</Button>
+                  <Button
+                    style={styles.fbLoginButton}
+                    onPress={() => navigation.navigate('MapaScreen')}
+                    color="#3897f1"
+                  >Entrar como visitante</Button>
+                  <Button
+                    style={styles.fbLoginButton}
+                    onPress={() => navigation.navigate('NovoCadastroScreen', { returnScreen: returnScreen })}
+                    color="#3897f1"
+                  >Novo Cadastro</Button> 
+                  {/* <Button
+                    style={styles.fbLoginButton}
+                    onPress={() => console.log("pressed login FB!!")}
+                    color="#3897f1"
+                  >Login with Facebook</Button> */}
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        );        
+      } else {
+        return (<ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />)
+      }
+
     }
 
 }
