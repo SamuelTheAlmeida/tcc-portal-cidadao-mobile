@@ -1,18 +1,18 @@
+import axios from 'axios';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, ActivityIndicator, Alert, Text, TextInput } from 'react-native';
+import { Alert, StyleSheet, View, ActivityIndicator, Text, TextInput } from 'react-native';
 import { Button, Colors } from 'react-native-paper';
+import * as Location from 'expo-location';
 import Geocoder from 'react-native-geocoding';
-import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
-import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
-import { useNavigation } from '@react-navigation/native';
-import * as Location from 'expo-location';
-import { Controller, useForm } from 'react-hook-form';
-import Toast from 'react-native-root-toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DropDown from "react-native-paper-dropdown";
+import { Controller, useForm } from 'react-hook-form';
+import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
+import Toast from 'react-native-root-toast';
+import DropDown from 'react-native-paper-dropdown';
 
 interface Postagem {
   titulo: string;
@@ -28,7 +28,7 @@ interface Postagem {
 
 type novaPostagemScreenProp = StackNavigationProp<RootStackParamList, 'NovaPostagemScreen'>;
 const NovaPostagemScreen=(props: any) => {
-const navigation = useNavigation<novaPostagemScreenProp>();
+  const navigation = useNavigation<novaPostagemScreenProp>();
   const returnScreen = props?.route?.params?.returnScreen ?? 'MapaScreen';
   console.log(returnScreen);
 
@@ -166,15 +166,24 @@ const navigation = useNavigation<novaPostagemScreenProp>();
     };
     console.log(model);
 
+    let sucesso = false;
     axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem', model)
     .then(response => {
-      console.log(response);
-        if (response.status == 200) {
+        sucesso = response.status === 200;
+        if (sucesso) {
             Toast.show(response.data.mensagem.descricao, {
               duration: Toast.durations.LONG,
               position: Toast.positions.BOTTOM
             });
-            navigation.navigate(returnScreen);
+            const postInserido = {
+              latitude: model.latitude,
+              longitude: model.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421
+            };
+            navigation.navigate('MapaScreen', {
+              postInserido: postInserido
+            });
         } else {
           if (response.data.mensagem?.descricao) {
             Alert.alert(response.data.mensagem.descricao);
@@ -187,7 +196,7 @@ const navigation = useNavigation<novaPostagemScreenProp>();
       console.log(err);
         //Alert.alert(err);
     })
-    .finally(() => setLoading(false));
+    .finally(() => { if (!sucesso) setLoading(false) });
 
   });
   

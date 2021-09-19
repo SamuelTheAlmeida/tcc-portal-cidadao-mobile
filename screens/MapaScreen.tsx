@@ -11,7 +11,6 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ImageURISource } from 'react-native';
-var greenDot = require("../assets/images/green-dot.png");
 
 interface BairroFiltro {
   bairro: string;
@@ -20,14 +19,22 @@ interface BairroFiltro {
 }
 type mapaScreenProp = StackNavigationProp<RootStackParamList, 'MapaScreen'>;
 
-export default function MapaScreen() {
+const MapaScreen=(props:any) => {
   const navigation = useNavigation<mapaScreenProp>();
-  const route = useRoute<RouteProp<RootStackParamList, 'MapaScreen'>>();
+  const postInserido = props?.route?.params?.postInserido;
+  const [mapRegion, setMapRegion] = useState({
+    latitude: -25.412127,
+    longitude: -49.226749,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421
+  });
+  
   const [posts, setPosts] = useState(null);
   const [loading, setLoading] = useState(false);
   const [gotLocation, setGotLocation] = useState(false);
   const [text, setText] = React.useState('');
   const [location, setLocation] = useState(null);
+
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
   const [filterModal, setModalFilter] = React.useState(false);
   const [bairros, setBairros] = React.useState(new Array<BairroFiltro>());
@@ -46,6 +53,10 @@ export default function MapaScreen() {
   // Initialize the module (needs to be done only once)
   Geocoder.init(key, {language : "pt"});
 
+  useEffect(() => {
+    if (postInserido)
+      setMapRegion(postInserido);
+  }, [postInserido])
 
   useEffect(() => {
     atualizarMapa();
@@ -58,20 +69,6 @@ export default function MapaScreen() {
       }
 
       recallCurrentLocationFunction();
-      /*await Location.getCurrentPositionAsync()
-      .then((pos) => {
-        setLocation(pos);
-      })
-      .catch(error => Alert.alert(error.message));
-      if (location) {
-        Geocoder.from(location.coords.latitude, location.coords.longitude)
-        .then(json => {
-          setText(json.results[0].formatted_address);
-        })
-        .catch(error => Alert.alert(error.message));
-      }*/
-
-
     })();
 
       return () => {
@@ -86,7 +83,6 @@ export default function MapaScreen() {
           });
           setLocation(locat);
           setGotLocation(true);
-          console.log(locat);
           Geocoder.from(locat.coords.latitude, locat.coords.longitude)
           .then(json => {
             setText(json.results[0].formatted_address);
@@ -239,12 +235,8 @@ export default function MapaScreen() {
         width: '100%',
         height: '93%'
       }}
-      initialRegion={{
-        latitude: -25.412127,
-        longitude: -49.226749,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421
-      }}>
+      region={mapRegion}
+      onRegionChange={setMapRegion}>
 
       {posts && posts.map((post: any, index: any) => {
           return (<Marker
@@ -268,7 +260,7 @@ export default function MapaScreen() {
           color="#3f51b5"
           accessibilityLabel="Criar postagem"
         >
-          Criar Postagem {route.params}
+          Criar Postagem
         </Button>
       </View>
     </View>
@@ -371,3 +363,5 @@ const customMapStyles = [
     ]
   }
 ];
+
+export default MapaScreen;
