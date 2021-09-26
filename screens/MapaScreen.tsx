@@ -2,7 +2,7 @@ import axios from 'axios';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View, ActivityIndicator, Text, ScrollView } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Region } from 'react-native-maps';
 import { Button, Checkbox, Colors, Dialog, Portal } from 'react-native-paper';
 import * as Location from 'expo-location';
 import Geocoder from 'react-native-geocoding';
@@ -22,12 +22,13 @@ type mapaScreenProp = StackNavigationProp<RootStackParamList, 'MapaScreen'>;
 const MapaScreen=(props:any) => {
   const navigation = useNavigation<mapaScreenProp>();
   const postInserido = props?.route?.params?.postInserido;
-  const [mapRegion, setMapRegion] = useState({
+  const [mapRegion, setMapRegion] = useState(null);
+  const initialRegion = {
     latitude: -25.412127,
     longitude: -49.226749,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421
-  });
+  };
   
   const [posts, setPosts] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +44,13 @@ const MapaScreen=(props:any) => {
 
   const showDialog = () => setModalFilter(true);
   const hideDialog = () => setModalFilter(false);
+
+  function onRegionChange(region: Region) {
+    const newState = Object.assign({}, mapRegion);
+    newState.latitude = region.latitude;
+    newState.longitude = region.longitude;
+    setMapRegion(newState);
+  }
 
   function toggleBairroChecked(index: number) {
     const newArray = [...bairros];
@@ -82,6 +90,12 @@ const MapaScreen=(props:any) => {
               accuracy: 6
           });
           setLocation(locat);
+          setMapRegion({
+              latitude: locat.coords.latitude,
+              longitude: locat.coords.longitude,
+              latitudeDelta: 0.0922,
+              longitudeDelta: 0.0421
+          })
           setGotLocation(true);
           Geocoder.from(locat.coords.latitude, locat.coords.longitude)
           .then(json => {
@@ -227,7 +241,7 @@ const MapaScreen=(props:any) => {
         </Dialog.Actions>
       </Dialog>
     </Portal>
-    {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+    {false && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
     <MapView
       showsPointsOfInterest = {false}
       customMapStyle = {customMapStyles}
@@ -235,8 +249,9 @@ const MapaScreen=(props:any) => {
         width: '100%',
         height: '93%'
       }}
-      region={mapRegion}
-      onRegionChange={setMapRegion}>
+      initialRegion={mapRegion}
+      onRegionChange={(region) => onRegionChange(region)}
+      >
 
       {posts && posts.map((post: any, index: any) => {
           return (<Marker
