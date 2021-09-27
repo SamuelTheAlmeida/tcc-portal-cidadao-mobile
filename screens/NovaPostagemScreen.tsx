@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, StyleSheet, View, ActivityIndicator, Text, TextInput } from 'react-native';
+import { Alert, StyleSheet, View, ActivityIndicator, Text, TextInput, Platform, Image } from 'react-native';
 import { Button, Colors } from 'react-native-paper';
 import * as Location from 'expo-location';
 import Geocoder from 'react-native-geocoding';
@@ -13,6 +13,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-native-google-places-autocomplete';
 import Toast from 'react-native-root-toast';
 import DropDown from 'react-native-paper-dropdown';
+import * as ImagePicker from 'expo-image-picker';
 
 interface Postagem {
   titulo: string;
@@ -35,6 +36,7 @@ const NovaPostagemScreen=(props: any) => {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState(null);
+  const [image, setImage] = useState(null);
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
 
   var googlePlacesAutocompleteRef = useRef<GooglePlacesAutocompleteRef>();
@@ -120,6 +122,17 @@ const NovaPostagemScreen=(props: any) => {
 
   }, []); // "[]" makes sure the effect will run only once.
 
+  useEffect(() => {
+    (async () => {
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          alert('Sorry, we need camera roll permissions to make this work!');
+        }
+      }
+    })();
+  }, []);
+
   function obterCategorias() {
     axios.get('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem/categorias')
     .then(response => {
@@ -139,6 +152,21 @@ const NovaPostagemScreen=(props: any) => {
     })
     .finally(() => setLoading(false));
   }
+
+  async function pickImage() {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.cancelled) {
+      //setImage(result.uri);
+    }
+  };
 
   const onSubmit = handleSubmit(async ({ titulo, categoriaId, subcategoria, descricao }) => {
     setLoading(true);
@@ -352,6 +380,10 @@ const NovaPostagemScreen=(props: any) => {
                     />
                   )}
                 />
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Button onPress={pickImage}>Pick an image from camera roll</Button>
+                  {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
+                </View>
 
                 <Button 
                 style={styles.modalLeftButtonStyle} 
