@@ -14,6 +14,36 @@ import { GooglePlacesAutocomplete, GooglePlacesAutocompleteRef } from 'react-nat
 import Toast from 'react-native-root-toast';
 import DropDown from 'react-native-paper-dropdown';
 import * as ImagePicker from 'expo-image-picker';
+import { Modal } from '../components/Modal';
+const apiUrl = 'http://10.0.2.2:5000';
+const apiUrlProd = 'http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080';
+
+interface FormDataValue {
+  uri: string;
+  name: string;
+  type: string;
+}
+
+interface FormData {
+  append(name: string, value: string | Blob | FormDataValue | object, fileName?: string): void;
+  delete(name: string): void;
+  get(name: string): FormDataEntryValue | null;
+  getAll(name: string): FormDataEntryValue[];
+  has(name: string): boolean;
+  set(name: string, value: string | Blob | FormDataValue, fileName?: string): void;
+}
+
+declare let FormData: {
+  prototype: FormData;
+  new (form?: HTMLFormElement): FormData;
+};
+
+interface FormData {
+  entries(): IterableIterator<[string, string | File]>;
+  keys(): IterableIterator<string>;
+  values(): IterableIterator<string | File>;
+  [Symbol.iterator](): IterableIterator<string | File>;
+}
 
 interface Postagem {
   titulo: string;
@@ -27,11 +57,11 @@ interface Postagem {
   usuarioId: number;
 }
 
+
 type novaPostagemScreenProp = StackNavigationProp<RootStackParamList, 'NovaPostagemScreen'>;
 const NovaPostagemScreen=(props: any) => {
   const navigation = useNavigation<novaPostagemScreenProp>();
   const returnScreen = props?.route?.params?.returnScreen ?? 'MapaScreen';
-  console.log(returnScreen);
 
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -53,8 +83,9 @@ const NovaPostagemScreen=(props: any) => {
       usuarioId: 0
     },
   });
-  const [showDropDownCategoria, setShowDropDownCategoria] = useState(false);
+  const [showDropDownCategoria, setShowDropDownCategoria] = useState(true);
   const [showDropDownSubcategoria, setShowDropDownSubcategoria] = useState(false);
+  const [mediaModalVisible, setMediaModalVisible] = useState(false);
   const subcategoriaList = [
     {
       label: "Reclamação",
@@ -70,56 +101,50 @@ const NovaPostagemScreen=(props: any) => {
     },
   ]
 
-  Geocoder.init(key, {language : "pt"});
-  (async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission to access location was denied');
-      return;
-    }
+  function recallCurrentLocationFunction() {
+    getCurrentLocation();
+  }; 
 
-    await Location.getCurrentPositionAsync({ accuracy: 1 })
-    .then((pos) => {
-      if (pos) {
-        Geocoder.from(pos.coords.latitude, pos.coords.longitude)
+  async function getCurrentLocation() {
+    try {
+        let locat = await Location.getCurrentPositionAsync({
+            accuracy: 6
+        });
+        Geocoder.from(locat.coords.latitude, locat.coords.longitude)
         .then(json => {
+          setLocation({
+              lat: locat.coords.latitude,
+              lng: locat.coords.longitude,
+              bairro: json.results[0]?.address_components[2]?.long_name
+          });
           googlePlacesAutocompleteRef.current.setAddressText(json.results[0].formatted_address);
         })
-        .catch(error => console.warn(error));
-      }
-    });
-  })
+        .catch(error => Alert.alert(error.message));
+    } catch (err) {
+        console.log("Couldn't get locations. Error: " + err);
+        recallCurrentLocationFunction();
+    }
+  };
 
   useEffect(() => {
     setTimeout(() => {
       (async () => {
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Permission to access location was denied');
-          return;
-        }
-  
-        await Location.getCurrentPositionAsync()
-        .then((pos) => {
-          if (pos) {
-            Geocoder.from(pos.coords.latitude, pos.coords.longitude)
-            .then(json => {
-              setLocation({
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude,
-                bairro: json.results[0]?.address_components[2]?.long_name
-            });
-              googlePlacesAutocompleteRef.current.setAddressText(json.results[0].formatted_address);
-            })
-            .catch(error => console.warn(error)); 
-          }
-        });
-
         obterCategorias();
-  
       })();
     }, 0);
 
+  }, []); // "[]" makes sure the effect will run only once.
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission to access location was denied');
+        return;
+      }
+
+      recallCurrentLocationFunction();
+    })();
   }, []); // "[]" makes sure the effect will run only once.
 
   useEffect(() => {
@@ -134,7 +159,7 @@ const NovaPostagemScreen=(props: any) => {
   }, []);
 
   function obterCategorias() {
-    axios.get('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem/categorias')
+    axios.get(apiUrlProd + '/api/Postagem/categorias')
     .then(response => {
         if (response.status == 200 && response.data) {
             const categoriasMap = response.data.dados.map((item: any, index: number) => {
@@ -153,6 +178,20 @@ const NovaPostagemScreen=(props: any) => {
     .finally(() => setLoading(false));
   }
 
+  async function takePicture() {
+    let result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    const resultAny = result as any;
+    if (!result.cancelled) {
+      setImage(resultAny.uri);
+    }
+  };
+
   async function pickImage() {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -161,14 +200,37 @@ const NovaPostagemScreen=(props: any) => {
       quality: 1,
     });
 
-    console.log(result);
-
+    const resultAny = result as any;
     if (!result.cancelled) {
-      //setImage(result.uri);
+      setImage(resultAny.uri);
     }
   };
 
+  async function getImageBlob(uri: string): Promise<unknown> {
+    // Why are we using XMLHttpRequest? See:
+    // https://github.com/expo/expo/issues/2402#issuecomment-443726662
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+      xhr.onerror = function (e) {
+        console.log(e);
+        reject(new TypeError("Network request failed"));
+      };
+      xhr.responseType = "blob";
+      xhr.open("GET", uri, true);
+      xhr.send(null);
+    });
+  
+    // We're done with the blob, close and release it
+    //blob.close();
+    return blob;
+  }
+
   const onSubmit = handleSubmit(async ({ titulo, categoriaId, subcategoria, descricao }) => {
+    const tryGetImage = await getImageBlob(image.replace("file:///", "file:/"));
+
     setLoading(true);
     const userData = JSON.parse(await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA'));
     if (!titulo || !categoriaId || !subcategoria || !descricao || !location || !userData) {
@@ -192,10 +254,20 @@ const NovaPostagemScreen=(props: any) => {
       longitude: location.lng,
       usuarioId: userData.id
     };
-    console.log(model);
 
+    const data = new FormData();
+    data.append('file', {
+      uri: image,
+      type: 'image/jpeg',
+      name: 'photo.jpg',
+    });
+    data.append('model', JSON.stringify(model));
     let sucesso = false;
-    axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem', model)
+    axios.post(apiUrl + '/api/Postagem', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
     .then(response => {
         sucesso = response.status === 200;
         if (sucesso) {
@@ -283,7 +355,7 @@ const NovaPostagemScreen=(props: any) => {
                       borderColor: '#eaeaea',
                       backgroundColor: '#fafafa',
                       paddingLeft: 10,
-                      marginTop: 5,
+                      marginTop: 20,
                       marginBottom: 5,
                     },
                     predefinedPlacesDescription: {
@@ -376,14 +448,58 @@ const NovaPostagemScreen=(props: any) => {
                       textContentType="none"
                       value={value.toString()}
                       multiline={true}
-                      numberOfLines={6}
+                      numberOfLines={4}
                     />
                   )}
                 />
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                  <Button onPress={pickImage}>Pick an image from camera roll</Button>
-                  {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
-                </View>
+
+                <Button 
+                style={styles.mediaButtonStyle}
+                compact={true} 
+                icon="attachment" 
+                mode="contained" 
+                onPress={() => setMediaModalVisible(true)}>
+                    <Text>Inserir Mídia</Text>
+                </Button>
+                {/*<Image style={styles.imageReduced} source={{ uri: image }} />*/}
+
+                <Modal isVisible={mediaModalVisible}>
+                  <Modal.Container>
+                    <Modal.Header title="Inserir mídia" />
+                    <Modal.Body>
+                      <Image style={styles.image} source={{ uri: image }} />
+                      <View style={styles.modalMediaButtonsContainer}>
+                          <Button 
+                          style={styles.modalMediaButtonStyle}
+                          compact={true} 
+                          icon="camera" 
+                          mode="contained" 
+                          onPress={() => takePicture()}>
+                              <Text>Câmera</Text>
+                          </Button>
+
+                          <Button 
+                          style={styles.modalMediaButtonStyle}
+                          compact={true} 
+                          icon="image" 
+                          mode="contained" 
+                          onPress={() => pickImage()}>
+                              <Text>Galeria</Text>
+                          </Button>
+                      </View>
+                    </Modal.Body>
+                    <Modal.Footer>
+                      <Button 
+                          style={styles.modalMediaConfirmButton} 
+                          icon="check" 
+                          mode="contained" 
+                          onPress={() => setMediaModalVisible(false)}
+                          >
+                              <Text>OK</Text>
+                        </Button>
+                    </Modal.Footer>
+                  </Modal.Container>
+                </Modal>
 
                 <Button 
                 style={styles.modalLeftButtonStyle} 
@@ -392,7 +508,7 @@ const NovaPostagemScreen=(props: any) => {
                 onPress={onSubmit}
                 >
                     <Text>Salvar</Text>
-                    </Button>
+                </Button>
                 <Button 
                 color="#3897f1"
                 style={styles.modalRightButtonStyle}
@@ -439,31 +555,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 5,
     color: 'rgba(0, 0, 0, 0.6)'
-    /*marginLeft: 15,
-    marginRight: 15,
-*/
-  },
-  formSelectInput: {
-    height: 50,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#000',
-    backgroundColor: 'rgba(220, 220, 220, 0.1)',
-    //paddingLeft: 10,
-    marginTop: 5,
-    marginBottom: 5,
-    color: 'rgba(0, 0, 0, 0.6)' 
-  },
-  formSelectInputItem: {
-    height: 50,
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#000',
-    backgroundColor: 'rgba(220, 220, 220, 0.1)',
-    paddingLeft: 10,
-    marginTop: 5,
-    marginBottom: 5,
-    color: 'rgba(0, 0, 0, 0.6)' 
   },
   formMultilineInput: {
     fontSize: 14,
@@ -499,6 +590,12 @@ const styles = StyleSheet.create({
     height: 45,
     marginTop: 10
   },
+  mediaButtonStyle: {
+    borderRadius: 5,
+    height: 45,
+    marginTop: 10,
+    marginBottom: 1
+  },
   modalRightButtonStyle: {
     height: 45,
     marginTop: 10,
@@ -514,7 +611,32 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     width: '100%',
     alignItems: 'flex-end'
-  }
+  },
+  modalMediaButtonStyle: {
+    borderRadius: 5,
+    height: '100%',
+    flex: 1,
+    marginTop: 2,
+    marginBottom: 2,
+    marginLeft: 10,
+    marginRight: 10
+  },
+  modalMediaButtonsContainer: {
+     flexDirection: 'row', 
+     alignSelf: 'flex-start'
+  },
+  modalMediaConfirmButton: {
+    height: '100%',
+    flexDirection: 'row', 
+    alignSelf: 'center',
+    justifyContent: 'center',
+    width: '90%',
+    borderRadius: 5,
+    marginTop: 2,
+    marginBottom: 2,
+  },
+  image: { width: '100%', height: 300, backgroundColor: '#eee', marginBottom: 10, marginTop: 10 },
+  imageReduced: { width: '100%', height: 50, backgroundColor: '#eee', marginTop: 1, marginBottom: 5 }
 });
 
 export default NovaPostagemScreen; 

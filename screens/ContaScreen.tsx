@@ -10,7 +10,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AuthService from '../service/AuthService';
+import getLoggedUser from '../hooks/getLoggedUser';
 
 interface FormData {
   login: string;
@@ -20,7 +20,6 @@ interface FormData {
 type ContaScreenProp = StackNavigationProp<RootStackParamList, 'ContaScreen'>;
 const ContaScreen=(props: any) => {
   const returnScreen = props?.route?.params?.returnScreen ?? 'MapaScreen';
-  console.log(returnScreen);
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [ready, setReady] = useState(false);
@@ -34,19 +33,7 @@ const ContaScreen=(props: any) => {
   });
 
   useEffect(() => {
-    const loggedUser = AuthService.getLoggedUser();
-    if (loggedUser) {
-      console.log(loggedUser);
-      setUserData(loggedUser);
-      console.log('user already logged in');
-    } else {
-      setUserData(null);
-      console.log('user not authenticated');
-    }
-    
-    setReady(true);
-
-    /*AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
+    AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
     .then((token) => {
       AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA').then
       ((userData) => {
@@ -62,7 +49,7 @@ const ContaScreen=(props: any) => {
       })
 
     })
-    .catch((err) => console.log(err));*/
+    .catch((err) => console.log(err));
   }, []); // "[]" makes sure the effect will run only once.
 
   async function logout() {
@@ -84,11 +71,9 @@ const ContaScreen=(props: any) => {
 
     axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/usuario/login', model)
     .then(async response => {
-        console.log(response.data.dados);
         if (response.status == 200) {
           if (response.data?.sucesso) {
             const dados = response.data.dados;
-            //console.log(JWT.decode(dados.token, 'c3ecf6c5baf0b269698c385e4a647f3e'));
             await AsyncStorage.setItem('@PORTAL_CIDADAO_USER_TOKEN', dados.token);
             await AsyncStorage.setItem('@PORTAL_CIDADAO_USER_DATA', JSON.stringify(dados));
             setUserData(dados);

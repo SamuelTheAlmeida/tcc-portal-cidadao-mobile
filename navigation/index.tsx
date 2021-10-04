@@ -33,10 +33,21 @@ function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Root" component={BottomTabNavigator} />
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
-      <Stack.Screen name="NovaPostagemScreen" component={NovaPostagemScreen} />
+      <Stack.Screen name="NovaPostagemScreen" component={NovaPostagemScreen} 
+      options={{ 
+        headerShown: true, 
+        headerTitle: 'Nova Postagem', 
+        headerTitleAlign: 'center',
+        headerTransparent: true
+        }} />
       <Stack.Screen name="MapaScreen" component={MapaScreen} />
       <Stack.Screen name="ContaScreen" component={ContaScreen} />
-      <Stack.Screen name="NovoCadastroScreen" component={NovoCadastroScreen} />
+      <Stack.Screen name="NovoCadastroScreen" component={NovoCadastroScreen}       options={{ 
+        headerShown: true, 
+        headerTitle: 'Novo Cadastro', 
+        headerTitleAlign: 'center',
+        headerTransparent: true
+        }} />
     </Stack.Navigator>
   );
 }

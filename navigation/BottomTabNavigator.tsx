@@ -30,7 +30,7 @@ export default function BottomTabNavigator() {
       tabBarOptions={{ activeTintColor: Colors[colorScheme].tint }}>
       <BottomTab.Screen
         name="MapaScreen"
-        component={TabOneNavigator}
+        component={MapaScreen}
         options={{
           tabBarLabel: 'Mapa',
           tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />,
@@ -38,7 +38,7 @@ export default function BottomTabNavigator() {
       />
       <BottomTab.Screen
         name="ContaScreen"
-        component={TabTwoNavigator}
+        component={ContaScreen}
         options={{
           tabBarLabel: 'Conta',
           tabBarIcon: ({ color }) => <TabBarIcon name="person" color={color} />,
