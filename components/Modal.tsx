@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, View, Text, Button } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import RNModal from "react-native-modal";
 
 type ModalProps = {
@@ -30,9 +31,10 @@ const ModalContainer = ({ children }: { children: React.ReactNode }) => (
   <View style={styles.container}>{children}</View>
 );
 
-const ModalHeader = ({ title }: { title: string }) => (
+const ModalHeader = ({ title, setIsVisible }: { title: string, setIsVisible: any }) => (
   <View style={styles.header}>
-    <Text style={styles.text}>{title}</Text>
+    <Ionicons name="md-arrow-back" size={32} color="black" style={styles.backButton} onPress={() => setIsVisible()}/>
+    <Text style={styles.title}>{title}</Text>
   </View>
 );
 
@@ -53,13 +55,30 @@ const styles = StyleSheet.create({
     borderStyle: "solid",
   },
   header: {
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
+    padding: 20,
+    flexDirection: 'row',
   },
   text: {
     paddingTop: 10,
     textAlign: "center",
     fontSize: 24,
+  },
+  backButton: {
+    //borderWidth: 1,
+    alignSelf: 'flex-start',
+    textAlign: 'left',
+    display: 'flex',
+    flex: 1
+  },
+  title: {
+    //borderWidth: 1,
+    display: 'flex',
+    flex: 5,
+    textAlign: 'left',
+    fontSize: 24,
+    fontWeight: '600'
   },
   body: {
     justifyContent: "center",

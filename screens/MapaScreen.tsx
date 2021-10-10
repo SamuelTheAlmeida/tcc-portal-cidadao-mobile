@@ -2,15 +2,16 @@ import axios from 'axios';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View, ActivityIndicator, Text, ScrollView } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
+import MapView, { Callout, Marker, Region } from 'react-native-maps';
 import { Button, Checkbox, Colors, Dialog, Portal } from 'react-native-paper';
 import * as Location from 'expo-location';
 import Geocoder from 'react-native-geocoding';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ImageURISource } from 'react-native';
+import { ModalPostagem } from '../components/ModalPostagem';
 
 interface BairroFiltro {
   bairro: string;
@@ -35,6 +36,8 @@ const MapaScreen=(props:any) => {
   const [gotLocation, setGotLocation] = useState(false);
   const [text, setText] = React.useState('');
   const [location, setLocation] = useState(null);
+  const [modalPostagemVisible, setModalPostagemVisible] = useState(false);
+  const [postSelecionado, setPostSelecionado] = useState(null);
 
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
   const [filterModal, setModalFilter] = React.useState(false);
@@ -202,6 +205,28 @@ const MapaScreen=(props:any) => {
     })
     .catch(error => Alert.alert(error.message));
   }
+
+  function onPressInsideCallout() {
+    Alert.alert('onPressInsideCallout');
+  }
+
+  function markerOnPress() {
+    Alert.alert('markerOnPress')
+  }
+  
+  function markerOnSelect() {
+    Alert.alert('markerOnSelect')
+  }
+
+  function markerOnDeselect() {
+    Alert.alert('markerOnDeselect')
+  }
+
+  function markerOnCalloutPress(postSelecionado: any) {
+    console.log(postSelecionado);
+    setPostSelecionado(postSelecionado);
+    setModalPostagemVisible(true);
+  }
   
   return (
     <View style={styles.containerStyle}>
@@ -260,11 +285,17 @@ const MapaScreen=(props:any) => {
             latitude: post.latitude,
             longitude: post.longitude
           }}
-          title={`${post.titulo}`}
-          description={`${post.descricao}`}
           image={obterIconeMarker(post)}
-        >
-
+          //onPress={markerOnPress}
+          //onSelect={markerOnSelect}
+          //onDeselect={markerOnDeselect}
+          onCalloutPress={() => markerOnCalloutPress(post)}
+          >
+            <Callout>
+              <View>
+                <Text>Ver Postagem</Text>
+              </View>
+            </Callout>
         </Marker>)
       })}
       </MapView>
@@ -278,6 +309,12 @@ const MapaScreen=(props:any) => {
           Criar Postagem
         </Button>
       </View>
+      <ModalPostagem 
+        isVisible={modalPostagemVisible} 
+        setIsVisible={setModalPostagemVisible}
+        postagem={postSelecionado}>
+
+      </ModalPostagem>
     </View>
   );
 }
