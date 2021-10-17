@@ -31,8 +31,6 @@ const MapaScreen=(props:any) => {
     longitudeDelta: 0.0421
   };
   const [mapRegion, setMapRegion] = useState(null);
-
-  
   const [posts, setPosts] = useState(null);
   const [loading, setLoading] = useState(false);
   const [gotLocation, setGotLocation] = useState(false);
@@ -42,11 +40,13 @@ const MapaScreen=(props:any) => {
   const [postSelecionado, setPostSelecionado] = useState(null);
   const [curtidaUsuario, setCurtidaUsuario] = useState(null);
   const [usuarioLogado, setUsuarioLogado] = useState(null);
+  const [comentarios, setComentarios] = useState([]);
 
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
   const [filterModal, setModalFilter] = React.useState(false);
   const [bairros, setBairros] = React.useState(new Array<BairroFiltro>());
   const bairrosRef = React.useRef([]);
+
   bairrosRef.current = bairros;
 
   const showDialog = () => setModalFilter(true);
@@ -75,7 +75,7 @@ const MapaScreen=(props:any) => {
 
   useEffect(() => {
     atualizarMapa();
-    const interval = setInterval(() => atualizarMapa(), 5000);
+    const interval = setInterval(() => atualizarMapa(), 30000);
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -112,7 +112,7 @@ const MapaScreen=(props:any) => {
 
             setText(json.results[0].formatted_address);
           })
-          .catch(error => Alert.alert(error.message));
+          .catch(error => Alert.alert('Error', error.message));
       } catch (err) {
           console.log("Couldn't get locations. Error: " + err);
           recallCurrentLocationFunction();
@@ -178,7 +178,7 @@ const MapaScreen=(props:any) => {
         setPosts(posts);
       })
       .catch((error) => {
-        Alert.alert(error);
+        Alert.alert('Error', error.message);
       })
       .finally(() => setLoading(false));
   }
@@ -211,7 +211,7 @@ const MapaScreen=(props:any) => {
           );
       }
     })
-    .catch(error => Alert.alert(error.message));
+    .catch(error => Alert.alert('Error', error.message));
   }
 
   async function markerOnCalloutPress(postSelecionado: any) {
@@ -231,10 +231,11 @@ const MapaScreen=(props:any) => {
       const result = response.data.dados;
       await obterLike(result.id);
       setPostSelecionado(result);
+      obterComentarios(postSelecionado.id);
       setModalPostagemVisible(true);
     })
     .catch((error) => {
-        Alert.alert(error);
+        Alert.alert('Error', error.message);
     })
     .finally(() => setLoading(false));
   }
@@ -257,7 +258,7 @@ const MapaScreen=(props:any) => {
       setPostSelecionado(result);
     })
     .catch((error) => {
-        Alert.alert(error);
+        Alert.alert('Error', error.message);
     })
     .finally(() => setLoading(false));
   }
@@ -290,6 +291,31 @@ const MapaScreen=(props:any) => {
     .catch((error) => {
         console.log(error);
     });
+  }
+
+  function obterComentarios(idPostagem: number) {
+    setLoading(true);
+    axios({
+      method: "GET",
+      url: `${API_URL}/api/comentario/${idPostagem}`,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      httpsAgent: {  
+        rejectUnauthorized: false
+      }
+    }).then((response) => {
+      if (response.data && response.data.sucesso && response.data.dados) {
+        const comentarios = response.data.dados;
+        setComentarios(comentarios);
+        console.log(comentarios);
+      }
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+    setLoading(false);
   }
   
   return (
@@ -381,6 +407,8 @@ const MapaScreen=(props:any) => {
         usuario={usuarioLogado}
         setLoading={setLoading}
         loading={loading}
+        comentarios={comentarios}
+        obterComentarios={obterComentarios}
         >
 
       </ModalPostagem>

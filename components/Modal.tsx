@@ -34,7 +34,7 @@ const ModalContainer = ({ children }: { children: React.ReactNode }) => (
 const ModalHeader = ({ title, setIsVisible }: { title: string, setIsVisible: any }) => (
   <View style={styles.header}>
     <Ionicons name="md-arrow-back" size={32} color="black" style={styles.backButton} onPress={() => setIsVisible()}/>
-    <Text style={styles.title}>{title}</Text>
+    <Text style={styles.title}>{capitalizeFirstLetter(title)}</Text>
   </View>
 );
 
@@ -45,6 +45,11 @@ const ModalBody = ({ children }: { children?: React.ReactNode }) => (
 const ModalFooter = ({ children }: { children?: React.ReactNode }) => (
   <View style={styles.footer}>{children}</View>
 );
+
+export default function capitalizeFirstLetter(string: string) {
+  if (!string) return;
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -78,7 +83,8 @@ const styles = StyleSheet.create({
     flex: 5,
     textAlign: 'left',
     fontSize: 24,
-    fontWeight: '600'
+    fontWeight: '600',
+    color: '#5B628F'
   },
   body: {
     justifyContent: "center",
