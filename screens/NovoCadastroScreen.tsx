@@ -10,6 +10,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
 import { TextInputMask } from 'react-native-masked-text';
+import {API_URL} from '@env'
 
 interface FormData {
   nome: string;
@@ -55,7 +56,7 @@ export default function NovoCadastroScreen() {
       perfilId: 2 // usuario padrão (cidadão)
     };
 
-    axios.post('http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/usuario', model)
+    axios.post(API_URL + '/api/usuario', model)
     .then(async response => {
         console.log(response.data);
         if (response.status == 200) {

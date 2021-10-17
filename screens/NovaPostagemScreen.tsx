@@ -15,8 +15,7 @@ import Toast from 'react-native-root-toast';
 import DropDown from 'react-native-paper-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 import { Modal } from '../components/Modal';
-const apiUrl = 'http://10.0.2.2:5000';
-const apiUrlProd = 'http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080';
+import {API_URL} from '@env'
 
 interface FormDataValue {
   uri: string;
@@ -159,7 +158,7 @@ const NovaPostagemScreen=(props: any) => {
   }, []);
 
   function obterCategorias() {
-    axios.get(apiUrlProd + '/api/Postagem/categorias')
+    axios.get(API_URL + '/api/Postagem/categorias')
     .then(response => {
         if (response.status == 200 && response.data) {
             const categoriasMap = response.data.dados.map((item: any, index: number) => {
@@ -263,7 +262,7 @@ const NovaPostagemScreen=(props: any) => {
     });
     data.append('model', JSON.stringify(model));
     let sucesso = false;
-    axios.post(apiUrl + '/api/Postagem', data, {
+    axios.post(API_URL + '/api/Postagem', data, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

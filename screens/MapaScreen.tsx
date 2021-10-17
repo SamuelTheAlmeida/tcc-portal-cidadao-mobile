@@ -12,8 +12,7 @@ import { RootStackParamList } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ImageURISource } from 'react-native';
 import { ModalPostagem } from '../components/ModalPostagem';
-const apiUrl = 'http://10.0.2.2:5000';
-const apiUrlProd = 'http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080';
+import {API_URL} from '@env'
 
 interface BairroFiltro {
   bairro: string;
@@ -139,7 +138,7 @@ const MapaScreen=(props:any) => {
     setLoading(true);
     axios({
       method: "GET",
-      url: apiUrl + "/api/Postagem",
+      url: API_URL + "/api/Postagem",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
@@ -220,7 +219,7 @@ const MapaScreen=(props:any) => {
     setCurtidaUsuario(null);
     axios({
       method: "GET",
-      url: apiUrl + "/api/Postagem/" + postSelecionado.id,
+      url: API_URL + "/api/Postagem/" + postSelecionado.id,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
@@ -244,7 +243,7 @@ const MapaScreen=(props:any) => {
     setLoading(true);
     axios({
       method: "GET",
-      url: apiUrl + "/api/Postagem/" + postSelecionado.id,
+      url: API_URL + "/api/Postagem/" + postSelecionado.id,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
@@ -273,7 +272,7 @@ const MapaScreen=(props:any) => {
 
     axios({
       method: "GET",
-      url: `${apiUrl}/api/Curtida/${idPostagem}/${idUser}`,
+      url: `${API_URL}/api/Curtida/${idPostagem}/${idUser}`,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"

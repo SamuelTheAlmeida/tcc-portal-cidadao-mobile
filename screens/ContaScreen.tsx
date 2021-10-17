@@ -11,8 +11,7 @@ import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import getLoggedUser from '../hooks/getLoggedUser';
-const apiUrl = 'http://10.0.2.2:5000';
-const apiUrlProd = 'http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080';
+import {API_URL} from '@env'
 
 interface FormData {
   login: string;
@@ -71,7 +70,7 @@ const ContaScreen=(props: any) => {
       senha
     };
 
-    axios.post(apiUrl + '/api/usuario/login', model)
+    axios.post(API_URL + '/api/usuario/login', model)
     .then(async response => {
         if (response.status == 200) {
           if (response.data?.sucesso) {

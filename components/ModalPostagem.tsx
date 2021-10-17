@@ -4,8 +4,7 @@ import React, { useState } from "react";
 import { StyleSheet, Image, Dimensions, Text, View, ActivityIndicator } from "react-native";
 import { Colors } from "react-native-paper";
 import { Modal } from "./Modal";
-const apiUrl = 'http://10.0.2.2:5000';
-const apiUrlProd = 'http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080';
+import {API_URL} from '@env'
 
 type ModalProps = {
   [x: string]: any;
@@ -37,7 +36,7 @@ export const ModalPostagem = ({
   async function atualizarCurtida(idCurtida: number, acao: boolean): Promise<void> {
     axios({
       method: "PUT",
-      url: `${apiUrl}/api/Curtida/${idCurtida}/${acao}`,
+      url: `${API_URL}/api/Curtida/${idCurtida}/${acao}`,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
@@ -56,7 +55,7 @@ export const ModalPostagem = ({
   async function removerCurtida(idCurtida: number): Promise<void> {
     axios({
       method: "DELETE",
-      url: `${apiUrl}/api/Curtida/${idCurtida}`,
+      url: `${API_URL}/api/Curtida/${idCurtida}`,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
@@ -75,7 +74,7 @@ export const ModalPostagem = ({
   async function inserirCurtida(acao: boolean, idUsuario: number, idPostagem: number) {
     axios({
       method: "POST",
-      url: `${apiUrl}/api/Curtida`,
+      url: `${API_URL}/api/Curtida`,
       data: {
         acao: acao,
         pontos: 1,
@@ -101,7 +100,7 @@ export const ModalPostagem = ({
     props.setLoading(true);
     axios({
       method: "GET",
-      url: `${apiUrl}/api/curtida/${props.postagem?.id}/${props.usuario?.id}`,
+      url: `${API_URL}/api/curtida/${props.postagem?.id}/${props.usuario?.id}`,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
@@ -117,6 +116,7 @@ export const ModalPostagem = ({
           atualizarCurtida(curtida.id, acao);
         } else if (curtida.acao === acao) {
           removerCurtida(curtida.id);
+          setAcaoCurtida(null);
         } 
       } else {
         inserirCurtida(acao, props.usuario?.id, props.postagem?.id);
@@ -137,7 +137,7 @@ export const ModalPostagem = ({
     props.setLoading(true);
     axios({
       method: "GET",
-      url: `${apiUrl}/api/curtida/${props.postagem?.id}/${props.usuario?.id}`,
+      url: `${API_URL}/api/curtida/${props.postagem?.id}/${props.usuario?.id}`,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
