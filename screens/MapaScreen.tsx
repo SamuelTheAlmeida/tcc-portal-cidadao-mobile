@@ -12,6 +12,8 @@ import { RootStackParamList } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ImageURISource } from 'react-native';
 import { ModalPostagem } from '../components/ModalPostagem';
+const apiUrl = 'http://10.0.2.2:5000';
+const apiUrlProd = 'http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080';
 
 interface BairroFiltro {
   bairro: string;
@@ -23,13 +25,14 @@ type mapaScreenProp = StackNavigationProp<RootStackParamList, 'MapaScreen'>;
 const MapaScreen=(props:any) => {
   const navigation = useNavigation<mapaScreenProp>();
   const postInserido = props?.route?.params?.postInserido;
-  const [mapRegion, setMapRegion] = useState(null);
   const initialRegion = {
     latitude: -25.412127,
     longitude: -49.226749,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421
   };
+  const [mapRegion, setMapRegion] = useState(null);
+
   
   const [posts, setPosts] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -38,6 +41,8 @@ const MapaScreen=(props:any) => {
   const [location, setLocation] = useState(null);
   const [modalPostagemVisible, setModalPostagemVisible] = useState(false);
   const [postSelecionado, setPostSelecionado] = useState(null);
+  const [curtidaUsuario, setCurtidaUsuario] = useState(null);
+  const [usuarioLogado, setUsuarioLogado] = useState(null);
 
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
   const [filterModal, setModalFilter] = React.useState(false);
@@ -102,6 +107,10 @@ const MapaScreen=(props:any) => {
           setGotLocation(true);
           Geocoder.from(locat.coords.latitude, locat.coords.longitude)
           .then(json => {
+            const pais = (json.results[0].address_components[5].long_name);
+            if (pais.toUpperCase() !== 'BRAZIL' && pais.toUpperCase() !== 'BRASIL')
+              throw new Error("invalid location, trying again...");
+
             setText(json.results[0].formatted_address);
           })
           .catch(error => Alert.alert(error.message));
@@ -130,7 +139,7 @@ const MapaScreen=(props:any) => {
     setLoading(true);
     axios({
       method: "GET",
-      url: "http://ec2-18-228-223-188.sa-east-1.compute.amazonaws.com:8080/api/Postagem",
+      url: apiUrl + "/api/Postagem",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json"
@@ -206,26 +215,82 @@ const MapaScreen=(props:any) => {
     .catch(error => Alert.alert(error.message));
   }
 
-  function onPressInsideCallout() {
-    Alert.alert('onPressInsideCallout');
+  async function markerOnCalloutPress(postSelecionado: any) {
+    setLoading(true);
+    setCurtidaUsuario(null);
+    axios({
+      method: "GET",
+      url: apiUrl + "/api/Postagem/" + postSelecionado.id,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      httpsAgent: {  
+        rejectUnauthorized: false
+      }
+    }).then(async (response) => {
+      const result = response.data.dados;
+      await obterLike(result.id);
+      setPostSelecionado(result);
+      setModalPostagemVisible(true);
+    })
+    .catch((error) => {
+        Alert.alert(error);
+    })
+    .finally(() => setLoading(false));
   }
 
-  function markerOnPress() {
-    Alert.alert('markerOnPress')
-  }
-  
-  function markerOnSelect() {
-    Alert.alert('markerOnSelect')
+  async function atualizarPostagem() {
+    setLoading(true);
+    axios({
+      method: "GET",
+      url: apiUrl + "/api/Postagem/" + postSelecionado.id,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      httpsAgent: {  
+        rejectUnauthorized: false
+      }
+    }).then(async (response) => {
+      const result = response.data.dados;
+      await obterLike(result.id);
+      setPostSelecionado(result);
+    })
+    .catch((error) => {
+        Alert.alert(error);
+    })
+    .finally(() => setLoading(false));
   }
 
-  function markerOnDeselect() {
-    Alert.alert('markerOnDeselect')
-  }
+  async function obterLike(idPostagem: number) {
+    const userData = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA');
+    const user = userData ? JSON.parse(userData) : null;
+    const idUser = user?.id;
+    console.log(idUser);
+    setUsuarioLogado(user);
+    console.log(user);
 
-  function markerOnCalloutPress(postSelecionado: any) {
-    console.log(postSelecionado);
-    setPostSelecionado(postSelecionado);
-    setModalPostagemVisible(true);
+    axios({
+      method: "GET",
+      url: `${apiUrl}/api/Curtida/${idPostagem}/${idUser}`,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      httpsAgent: {  
+        rejectUnauthorized: false
+      }
+    }).then((response) => {
+      const result = response.data;
+      if (result.dados) {
+        console.log(result.dados);
+        setCurtidaUsuario({id: result.dados.id, acao: result.dados.acao});
+      }
+    })
+    .catch((error) => {
+        console.log(error);
+    });
   }
   
   return (
@@ -266,7 +331,7 @@ const MapaScreen=(props:any) => {
         </Dialog.Actions>
       </Dialog>
     </Portal>
-    {false && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+    {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
     <MapView
       showsPointsOfInterest = {false}
       customMapStyle = {customMapStyles}
@@ -312,7 +377,12 @@ const MapaScreen=(props:any) => {
       <ModalPostagem 
         isVisible={modalPostagemVisible} 
         setIsVisible={setModalPostagemVisible}
-        postagem={postSelecionado}>
+        postagem={postSelecionado}
+        atualizarPostagem={atualizarPostagem}
+        usuario={usuarioLogado}
+        setLoading={setLoading}
+        loading={loading}
+        >
 
       </ModalPostagem>
     </View>

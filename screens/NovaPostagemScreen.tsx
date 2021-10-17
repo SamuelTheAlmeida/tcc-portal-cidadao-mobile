@@ -465,7 +465,7 @@ const NovaPostagemScreen=(props: any) => {
 
                 <Modal isVisible={mediaModalVisible}>
                   <Modal.Container>
-                    <Modal.Header title="Inserir mídia" />
+                    <Modal.Header title="Inserir mídia" setIsVisible={undefined}/>
                     <Modal.Body>
                       <Image style={styles.image} source={{ uri: image }} />
                       <View style={styles.modalMediaButtonsContainer}>
