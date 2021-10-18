@@ -1,15 +1,21 @@
 import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Image, Dimensions, Text, View, ActivityIndicator, TextInput } from "react-native";
+import { StyleSheet, Image, Dimensions, Text, View, ActivityIndicator, TextInput, Alert, TouchableOpacity } from "react-native";
 import { Colors } from "react-native-paper";
 import capitalizeFirstLetter, { Modal } from "./Modal";
 import {API_URL} from '@env'
 import { ScrollView } from "react-native-gesture-handler";
+import { Controller, useForm } from "react-hook-form";
+import Toast from "react-native-root-toast";
 
 type ModalProps = {
   [x: string]: any;
 };
+
+interface Comentario {
+  descricao: string;
+}
 
 function obterTempoPost(data: any) {
   const diferencaMinutos = ((new Date().getTime() - new Date(data).getTime()) / 1000 ) / 60;
@@ -27,12 +33,16 @@ function obterTempoPost(data: any) {
   }
 }
 
-
-
 export const ModalPostagem = ({
   ...props
 }: ModalProps) => {
   const [acaoCurtida, setAcaoCurtida] = useState(null);
+  const { control, handleSubmit, setValue } = useForm<Comentario>({
+    defaultValues: {
+      descricao: '',
+    },
+  });
+
 
   async function atualizarCurtida(idCurtida: number, acao: boolean): Promise<void> {
     axios({
@@ -98,7 +108,6 @@ export const ModalPostagem = ({
   }
 
   async function curtirOuDescurtir(acao: boolean) {
-    console.log('props', props);
     props.setLoading(true);
     axios({
       method: "GET",
@@ -136,7 +145,6 @@ export const ModalPostagem = ({
   }
 
   function obterCurtida() {
-    console.log('props', props);
     props.setLoading(true);
     axios({
       method: "GET",
@@ -159,6 +167,43 @@ export const ModalPostagem = ({
     });
     props.setLoading(false);
   }
+
+  const onSubmit = handleSubmit(async ({ descricao }) => {
+    props.setLoading(true);
+    if (!descricao || descricao === '') {
+      props.setLoading(false);
+      return;
+    }
+    let model = {
+      descricao,
+      dataCadastro: new Date(),
+      usuarioId: props.usuario?.id,
+      postagemId: props.postagem?.id
+    };
+
+    axios.post(API_URL + '/api/Comentario', model)
+    .then(response => {
+        const sucesso = response.status === 200 && response.data?.sucesso;
+        if (sucesso) {
+            Toast.show(response.data.mensagem.descricao, {
+              duration: Toast.durations.LONG,
+              position: Toast.positions.BOTTOM
+            });
+        } else {
+          if (response.data.mensagem?.descricao) {
+            Alert.alert('Erro', response.data.mensagem.descricao);
+          } else {
+            Alert.alert('Erro', JSON.stringify(response.data));
+          }
+        }
+    })
+    .catch((err) => {
+      console.log('falha ao inserir');
+        //Alert.alert(err);
+    })
+    .finally(() => { props.setLoading(false); setValue('descricao', ''); props.obterComentarios(props.postagem?.id); });
+
+  });
 
   return (
         <Modal isVisible={props.isVisible} >
@@ -224,23 +269,35 @@ export const ModalPostagem = ({
                       </View>
 
                       <View style={{}}>
-                        <TextInput
-                          autoCapitalize="sentences"
-                          autoCompleteType="off"
-                          autoCorrect={true}
-                          keyboardType="default"
-                          returnKeyType="send"
-                          placeholder="Digite aqui seu comentário..." 
-                          placeholderTextColor="rgba(0, 0, 0, 0.6)" 
-                          style={styles.commentInput} 
-                          textContentType="none"
+                        <Controller
+                          control={control}
+                          name="descricao"
+                          render={({ field: { onBlur, onChange, value } }) => (
+                            <TextInput
+                            autoCapitalize="sentences"
+                            autoCompleteType="off"
+                            autoCorrect={true}
+                            keyboardType="default"
+                            onBlur={onBlur}
+                            onChangeText={onChange}
+                            onSubmitEditing={onSubmit}
+                            value={value}
+                            returnKeyType="send"
+                            placeholder="Digite aqui seu comentário..." 
+                            placeholderTextColor="rgba(0, 0, 0, 0.6)" 
+                            style={styles.commentInput} 
+                            textContentType="none"
+                            />
+                          )}
+                          
                         />
+
                       </View>
                     </View>
 
-                    <View style={{flex: 0.1, alignItems: 'center', justifyContent: 'flex-end'}}>
+                    <TouchableOpacity style={{flex: 0.1, alignItems: 'center', justifyContent: 'flex-end'}} onPress={onSubmit}>
                       <Ionicons name="send" size={28} color="#5B628F" />
-                    </View>
+                    </TouchableOpacity>
                   </View>
 
                   <View style={styles.commentListSection}>
@@ -277,7 +334,7 @@ const Comentario = ( props: ComentarioProps ) => {
 
     <View style={{flexDirection: 'column', flex: 0.8, alignItems: 'flex-start'}}>
       <View style={{marginBottom: 3}}>
-        <Text>{comentario.usuarioId.toString()}</Text>
+        <Text>{comentario.nomeUsuario}</Text>
       </View>
 
     <View style={{}}>

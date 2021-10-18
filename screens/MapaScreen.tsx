@@ -136,6 +136,7 @@ const MapaScreen=(props:any) => {
 
   function atualizarMapa() {
     setLoading(true);
+    //console.log("trying to call " + API_URL + "/api/Postagem");
     axios({
       method: "GET",
       url: API_URL + "/api/Postagem",
