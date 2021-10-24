@@ -12,10 +12,16 @@ import Toast from 'react-native-root-toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import getLoggedUser from '../hooks/getLoggedUser';
 import {API_URL} from '@env'
+import { MaterialIcons } from '@expo/vector-icons';
 
 interface FormData {
   login: string;
   senha: string;
+}
+
+interface AlteracaoFormData {
+  nome: string;
+  email: string;
 }
 
 type ContaScreenProp = StackNavigationProp<RootStackParamList, 'ContaScreen'>;
@@ -33,6 +39,13 @@ const ContaScreen=(props: any) => {
     },
   });
 
+  const { control: alteracaoControl, handleSubmit: alteracaoSubmit, setValue } = useForm<AlteracaoFormData>({
+    defaultValues: {
+      nome: '',
+      email: ''
+    },
+  });
+
   useEffect(() => {
     AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN')
     .then((token) => {
@@ -40,7 +53,7 @@ const ContaScreen=(props: any) => {
       ((userData) => {
         if (token && userData) {
           setUserData(JSON.parse(userData));
-          console.log('user already logged in');
+          //console.log('user already logged in');
         } else {
           setUserData(null);
           console.log('user not authenticated');
@@ -53,6 +66,13 @@ const ContaScreen=(props: any) => {
     .catch((err) => console.log(err));
   }, []); // "[]" makes sure the effect will run only once.
 
+  useEffect(() => {
+    if (userData) {
+      setValue('nome', userData.nome);
+      setValue('email', userData.email);
+    }
+  }, [userData]);
+
   async function logout() {
     await AsyncStorage.removeItem('@PORTAL_CIDADAO_USER_TOKEN');
     await AsyncStorage.removeItem('@PORTAL_CIDADAO_USER_DATA');
@@ -62,6 +82,35 @@ const ContaScreen=(props: any) => {
       position: Toast.positions.CENTER
     });
   }
+
+  const onSubmitUpdate = alteracaoSubmit(({ nome, email }) => {
+    console.log(nome);
+    console.log(email);
+    
+    setLoading(true);
+    let model = {
+      nome,
+      email
+    };
+
+    console.log(userData);
+    const usuarioId = userData.id;
+    axios.patch(API_URL + '/api/usuario/' + usuarioId, model)
+    .then(async response => {
+        if (response.status == 200 && response.data?.sucesso) {
+            Toast.show('Alteração realizada com sucesso!', {
+              duration: Toast.durations.SHORT,
+              position: Toast.positions.BOTTOM
+            });
+        } else {
+          Alert.alert('Erro ao realizar alteração de dados no servidor.')
+        }
+    })
+    .catch((err) => {
+        console.log(err);
+    })
+    .finally(() => setLoading(false));
+  });
 
   const onSubmit = handleSubmit(({ login, senha }) => {
     setLoading(true);
@@ -99,27 +148,73 @@ const ContaScreen=(props: any) => {
 
     if (userData) {
       return (        
-      <KeyboardAvoidingView 
-        keyboardVerticalOffset={20}
-        style={styles.containerView} 
-        behavior="padding">
-        {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
-    
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.loginScreenContainer}>
-            <View style={styles.loginFormView}>
-              <Text style={styles.logoText}>{userData.nome}</Text>
-              <Text style={styles.userDataInfo}>{userData.email}</Text>
-
-              <Button
-                mode="contained"
-                style={styles.loginButton}
+        <View style={styles.accountContainerView}>
+          <View style={styles.userHeader}>
+            <MaterialIcons name="account-circle" size={128} color="#5B628F" />
+            <Text style={styles.userName}>{userData.nome}</Text>
+            <Text style={styles.userRole}>{userData.perfil?.nome}</Text>
+            <Button
+                mode="outlined"
+                style={styles.logoutButton}
                 onPress={logout}
               >SAIR</Button>
-            </View>
           </View>
-        </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>)
+          <View style={styles.userFields}>
+            <Text style={styles.userFieldLabel}>Nome</Text>
+            <Controller
+                control={alteracaoControl}
+                name="nome"
+                render={({ field: { onBlur, onChange, value }}) => (
+                  <TextInput
+                    autoCapitalize="words"
+                    autoCompleteType="name"
+                    autoCorrect={false}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    onSubmitEditing={onSubmitUpdate}
+                    returnKeyType="next"
+                    placeholder="Seu Nome" 
+                    placeholderTextColor="#c4c3cb" 
+                    style={styles.userUpdatableField} 
+                    textContentType="name"
+                    value={value}
+                  />
+                )}
+              />
+              <Text style={styles.userFieldLabel}>Seu melhor email</Text>
+              <Controller
+                control={alteracaoControl}
+                name="email"
+                render={({ field: { onBlur, onChange, value }}) => (
+                  <TextInput
+                    autoCapitalize="none"
+                    autoCompleteType="email"
+                    autoCorrect={false}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    onSubmitEditing={onSubmitUpdate}
+                    returnKeyType="done"
+                    placeholder="Email" 
+                    placeholderTextColor="#c4c3cb" 
+                    style={styles.userUpdatableField} 
+                    textContentType="emailAddress"
+                    value={value}
+                  />
+                )}
+              />
+              <Button
+                mode="contained"
+                style={styles.saveDataButton}
+                onPress={onSubmitUpdate}
+              >Salvar dados</Button>
+              <Button
+                mode="outlined"
+                style={styles.resetPasswordButton}
+                onPress={logout}
+              >Redefinir senha</Button>
+          </View>
+        </View>
+      )
     } else {
       if (ready) {
         return (
@@ -216,6 +311,10 @@ const styles = StyleSheet.create({
   containerView: {
     flex: 1,
   },
+  accountContainerView: {
+    flex: 1,
+    paddingVertical: 30
+  },
   loginScreenContainer: {
     flex: 1,
   },
@@ -247,7 +346,6 @@ const styles = StyleSheet.create({
     marginRight: 15,
     marginTop: 5,
     marginBottom: 5,
-  
   },
   loginButton: {
     backgroundColor: '#3897f1',
@@ -255,11 +353,62 @@ const styles = StyleSheet.create({
     height: 45,
     marginTop: 10,
   },
+  logoutButton: {
+    borderRadius: 5,
+    marginTop: 10,
+    width: '100%'
+  },
+  saveDataButton: {
+    backgroundColor: '#5B628F',
+    borderRadius: 5,
+    height: 45,
+    marginTop: 10,
+    width: '100%'
+  },
+  resetPasswordButton: {
+    height: 45,
+    marginTop: 10,
+  },
   fbLoginButton: {
     height: 45,
     marginTop: 10,
     backgroundColor: 'transparent',
-  }
+  },
+  userHeader: {
+    backgroundColor: '#E9F0FB',
+    height: 320,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 30
+  },
+  userName: {
+    fontWeight: 'bold',
+    fontSize: 40
+  },
+  userRole: {
+    fontSize: 18,
+    fontWeight: '300'
+  },
+  userFields: {
+    flex: 1,
+    padding: 30
+  },
+  userFieldLabel: {
+    fontSize: 12,
+    paddingLeft: 10,
+    color: '#222'
+  },
+  userUpdatableField: {
+    height: 43,
+    fontSize: 14,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#eaeaea',
+    backgroundColor: '#fafafa',
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    color: '#555'
+  },
 });
 
 export default ContaScreen;

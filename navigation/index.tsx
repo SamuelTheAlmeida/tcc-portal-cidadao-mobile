@@ -42,7 +42,7 @@ function RootNavigator() {
         }} />
       <Stack.Screen name="MapaScreen" component={MapaScreen} />
       <Stack.Screen name="ContaScreen" component={ContaScreen} />
-      <Stack.Screen name="NovoCadastroScreen" component={NovoCadastroScreen}       options={{ 
+      <Stack.Screen name="NovoCadastroScreen" component={NovoCadastroScreen} options={{ 
         headerShown: true, 
         headerTitle: 'Novo Cadastro', 
         headerTitleAlign: 'center',
