@@ -19,6 +19,19 @@ interface BairroFiltro {
   count: number;
   checked: boolean;
 }
+
+interface CategoriaFiltro {
+  categoria: string;
+  count: number;
+  checked: boolean;
+}
+
+interface SubcategoriaFiltro {
+  subcategoria: string;
+  count: number;
+  checked: boolean;
+}
+
 type mapaScreenProp = StackNavigationProp<RootStackParamList, 'MapaScreen'>;
 
 const MapaScreen=(props:any) => {
@@ -46,8 +59,15 @@ const MapaScreen=(props:any) => {
   const [filterModal, setModalFilter] = React.useState(false);
   const [bairros, setBairros] = React.useState(new Array<BairroFiltro>());
   const bairrosRef = React.useRef([]);
-
   bairrosRef.current = bairros;
+
+  const [categorias, setCategorias] = React.useState(new Array<CategoriaFiltro>());
+  const categoriasRef = React.useRef([]);
+  categoriasRef.current = categorias;
+
+  const [subcategorias, setSubcategorias] = React.useState(new Array<SubcategoriaFiltro>());
+  const subcategoriasRef = React.useRef([]);
+  subcategoriasRef.current = subcategorias;
 
   const showDialog = () => setModalFilter(true);
   const hideDialog = () => setModalFilter(false);
@@ -63,6 +83,18 @@ const MapaScreen=(props:any) => {
     const newArray = [...bairros];
     newArray[index].checked = !bairros[index].checked;
     setBairros(newArray);
+  }
+
+  function toggleCategoriaChecked(index: number) {
+    const newArray = [...categorias];
+    newArray[index].checked = !categorias[index].checked;
+    setCategorias(newArray);
+  }
+
+  function toggleSubcategoriaChecked(index: number) {
+    const newArray = [...subcategorias];
+    newArray[index].checked = !subcategorias[index].checked;
+    setSubcategorias(newArray);
   }
 
   // Initialize the module (needs to be done only once)
@@ -151,7 +183,7 @@ const MapaScreen=(props:any) => {
       .then((response) => {
         const bairrosSelecionados = bairrosRef.current.filter(x => x.checked);
         const nomesBairros = bairrosSelecionados.map((item) => { return item.bairro });
-        let posts = [];
+        var posts = [];
         if (bairrosSelecionados.length > 0) {
           posts = response.data.dados.filter((x: { bairro: string; }) => nomesBairros.includes(x.bairro));
         } else {
@@ -176,6 +208,61 @@ const MapaScreen=(props:any) => {
           }
         );
         setBairros(arrayBairros);
+
+        const categoriasSelecionadas = categoriasRef.current.filter(x => x.checked);
+        const nomesCategorias = categoriasSelecionadas.map((item) => { return item.categoria });
+        if (categoriasSelecionadas.length > 0) {
+          posts = posts.filter((x: { categoria: { nome: any; }; }) => nomesCategorias.includes(x.categoria.nome) );
+        } else {
+          posts = posts;
+        }
+
+        const arrayCategorias = [...categoriasRef.current];
+        arrayCategorias.forEach((item) => item.count = 0);
+        response.data.dados.map(
+          (item: any) => { 
+            if (arrayCategorias.filter(x => x.categoria == item.categoria?.nome).length > 0) {
+              const index = arrayCategorias.findIndex(x => x.categoria == item.categoria?.nome);
+              arrayCategorias[index].count++;
+            } else {
+              const isAlreadyChecked = nomesCategorias.includes(item.categoria?.nome);
+              arrayCategorias.push({
+                categoria: item.categoria?.nome,
+                count: 1,
+                checked: isAlreadyChecked
+              });
+            }
+          }
+        );
+        setCategorias(arrayCategorias);
+
+        const subcategoriasSelecionadas = subcategoriasRef.current.filter(x => x.checked);
+        const nomesSubcategorias = subcategoriasSelecionadas.map((item) => { return item.subcategoria });
+        if (subcategoriasSelecionadas.length > 0) {
+          posts = posts.filter((x: { subcategoria: { nome: any; }; }) => nomesSubcategorias.includes(x.subcategoria.nome) );
+        } else {
+          posts = posts;
+        }
+
+        const arraySubcategorias = [...subcategoriasRef.current];
+        arraySubcategorias.forEach((item) => item.count = 0);
+        response.data.dados.map(
+          (item: any) => { 
+            if (arraySubcategorias.filter(x => x.subcategoria == item.subcategoria?.nome).length > 0) {
+              const index = arraySubcategorias.findIndex(x => x.subcategoria == item.subcategoria?.nome);
+              arraySubcategorias[index].count++;
+            } else {
+              const isAlreadyChecked = nomesSubcategorias.includes(item.subcategoria?.nome);
+              arraySubcategorias.push({
+                subcategoria: item.subcategoria?.nome,
+                count: 1,
+                checked: isAlreadyChecked
+              });
+            }
+          }
+        );
+        setSubcategorias(arraySubcategorias);
+
         setPosts(posts);
       })
       .catch((error) => {
@@ -335,6 +422,34 @@ const MapaScreen=(props:any) => {
         <Dialog.Content style={{height: '70%'}}>
           <Dialog.ScrollArea style={{height: '70%'}}>
             <ScrollView contentContainerStyle={{paddingHorizontal: 1}}>
+            <Text style={{fontSize: 14}}>Categorias</Text>
+              {categorias && categorias.map((item,index) => {
+                  return (
+                        <Checkbox.Item
+                        labelStyle={{ fontSize: 12}}
+                        key={index}
+                        color='rgba(91, 98, 143, 0.75)'
+                        label={`${item.categoria} (${item.count})`}
+                        status={item.checked === true ? 'checked' : 'unchecked'}
+                        onPress={() => toggleCategoriaChecked(index)}
+                      />
+                  );
+              })}
+
+              <Text style={{fontSize: 14}}>Subcategorias</Text>
+              {subcategorias && subcategorias.map((item,index) => {
+                  return (
+                        <Checkbox.Item
+                        labelStyle={{ fontSize: 12}}
+                        key={index}
+                        color='rgba(91, 98, 143, 0.75)'
+                        label={`${item.subcategoria} (${item.count})`}
+                        status={item.checked === true ? 'checked' : 'unchecked'}
+                        onPress={() => toggleSubcategoriaChecked(index)}
+                      />
+                  );
+              })}
+
               <Text style={{fontSize: 14}}>Bairros</Text>
               {bairros && bairros.map((item,index) => {
                   return (
