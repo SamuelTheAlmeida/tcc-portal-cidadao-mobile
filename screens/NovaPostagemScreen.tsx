@@ -206,6 +206,11 @@ const NovaPostagemScreen=(props: any) => {
   };
 
   async function getImageBlob(uri: string): Promise<unknown> {
+    console.log('calling getiamgeblob');
+    if (!image)
+      return;
+
+    console.log('if passed');
     // Why are we using XMLHttpRequest? See:
     // https://github.com/expo/expo/issues/2402#issuecomment-443726662
     const blob = await new Promise((resolve, reject) => {
@@ -228,7 +233,9 @@ const NovaPostagemScreen=(props: any) => {
   }
 
   const onSubmit = handleSubmit(async ({ titulo, categoriaId, subcategoria, descricao }) => {
-    const tryGetImage = await getImageBlob(image.replace("file:///", "file:/"));
+    if (image) {
+      await getImageBlob(image.replace("file:///", "file:/"));
+    }
 
     setLoading(true);
     const userData = JSON.parse(await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA'));
@@ -255,13 +262,17 @@ const NovaPostagemScreen=(props: any) => {
     };
 
     const data = new FormData();
-    data.append('file', {
-      uri: image,
-      type: 'image/jpeg',
-      name: 'photo.jpg',
-    });
+    if (image) {
+      data.append('file', {
+        uri: image,
+        type: 'image/jpeg',
+        name: 'photo.jpg',
+      });
+    }
+
     data.append('model', JSON.stringify(model));
     let sucesso = false;
+    console.log('calling ' + API_URL + '/api/Postagem');
     axios.post(API_URL + '/api/Postagem', data, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -280,9 +291,9 @@ const NovaPostagemScreen=(props: any) => {
               latitudeDelta: 0.0922,
               longitudeDelta: 0.0421
             };
-            navigation.navigate('MapaScreen', {
-              postInserido: postInserido
-            });
+ 
+            AsyncStorage.setItem('postInserido', JSON.stringify(postInserido)); 
+            navigation.navigate('Root');
         } else {
           if (response.data.mensagem?.descricao) {
             Alert.alert(response.data.mensagem.descricao);
@@ -513,6 +524,12 @@ const NovaPostagemScreen=(props: any) => {
                 style={styles.modalRightButtonStyle}
                 onPress={() => navigation.navigate('Root')}>
                     <Text>Voltar</Text>
+                </Button>
+                <Button 
+                color="#3897f1"
+                style={styles.modalRightButtonStyle}
+                onPress={() => { AsyncStorage.setItem('postInserido', 'testeee'); navigation.navigate('Root'); } }>
+                    <Text>Redirect</Text>
                 </Button>
             </View>
           </View>

@@ -54,6 +54,7 @@ const MapaScreen=(props:any) => {
   const [curtidaUsuario, setCurtidaUsuario] = useState(null);
   const [usuarioLogado, setUsuarioLogado] = useState(null);
   const [comentarios, setComentarios] = useState([]);
+  const [midiaPostagem, setMidiaPostagem] = useState(null);
 
   const key = 'AIzaSyBdlrJedgf_qmWwMOTppGyuzzD3EAk3ZIg';
   const [filterModal, setModalFilter] = React.useState(false);
@@ -101,9 +102,22 @@ const MapaScreen=(props:any) => {
   Geocoder.init(key, {language : "pt"});
 
   useEffect(() => {
-    if (postInserido)
+    /*if (postInserido) {
+      console.log(postInserido);
       setMapRegion(postInserido);
-  }, [postInserido])
+    }*/
+    const postInseridoStorage = AsyncStorage.getItem('postInserido')
+    .then((result) => {
+      if (result) {
+        setMapRegion(JSON.parse(result));
+        atualizarMapa();
+        AsyncStorage.removeItem('postInserido');
+      }
+      else 
+        console.log('sem post inserido');
+    })
+      
+  }, []);
 
   useEffect(() => {
     atualizarMapa();
@@ -320,6 +334,7 @@ const MapaScreen=(props:any) => {
       await obterLike(result.id);
       setPostSelecionado(result);
       obterComentarios(postSelecionado.id);
+      obterMidiaPostagem(result.imagemUrl);
       setModalPostagemVisible(true);
     })
     .catch((error) => {
@@ -355,10 +370,9 @@ const MapaScreen=(props:any) => {
     const userData = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA');
     const user = userData ? JSON.parse(userData) : null;
     const idUser = user?.id;
-    console.log(idUser);
     setUsuarioLogado(user);
-    console.log(user);
 
+    
     axios({
       method: "GET",
       url: `${API_URL}/api/Curtida/${idPostagem}/${idUser}`,
@@ -372,7 +386,6 @@ const MapaScreen=(props:any) => {
     }).then((response) => {
       const result = response.data;
       if (result.dados) {
-        console.log(result.dados);
         setCurtidaUsuario({id: result.dados.id, acao: result.dados.acao});
       }
     })
@@ -397,7 +410,30 @@ const MapaScreen=(props:any) => {
       if (response.data && response.data.sucesso && response.data.dados) {
         const comentarios = response.data.dados;
         setComentarios(comentarios);
-        console.log(comentarios);
+      }
+    })
+    .catch((error) => {
+        console.log(error);
+    });
+    setLoading(false);
+  }
+
+  function obterMidiaPostagem(nomeArquivo: string) {
+    setLoading(true);
+    axios({
+      method: "GET",
+      url: `${API_URL}/api/arquivo/${nomeArquivo}`,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      httpsAgent: {  
+        rejectUnauthorized: false
+      }
+    }).then((response) => {
+      if (response.data && response.data.fileContents) {
+        const midia = response.data.fileContents;
+        setMidiaPostagem(midia);
       }
     })
     .catch((error) => {
@@ -524,6 +560,7 @@ const MapaScreen=(props:any) => {
         setLoading={setLoading}
         loading={loading}
         comentarios={comentarios}
+        midia={midiaPostagem}
         obterComentarios={obterComentarios}
         >
 

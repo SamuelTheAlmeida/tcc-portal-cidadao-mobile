@@ -215,11 +215,17 @@ export const ModalPostagem = ({
 
             <ScrollView style={{maxHeight: 500}} persistentScrollbar={true}>
               <Modal.Body>
+                {props.midia ? <Image
+                  resizeMode={'cover'}
+                  style={styles.postImage}
+                  source={{uri: `data:image/gif;base64,${props.midia}`}}
+                />
+                :
                 <Image
                   resizeMode={'cover'}
                   style={styles.postImage}
-                  source={require('../assets/images/teste.png')}
-                />
+                  source={require('../assets/images/placeholder.png')}
+                />}
                 <Text style={styles.postDescription}>
                {/* It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.*/}
                 {capitalizeFirstLetter(props.postagem?.descricao)}
@@ -398,7 +404,8 @@ const styles = StyleSheet.create({
   },
   postTimeContainer: {
     flexDirection: 'row',
-    flex: 1.25
+    flex: 1.25,
+    flexWrap: 'wrap'
   },
   spinner: {
     position: 'absolute',
