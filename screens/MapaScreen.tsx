@@ -120,8 +120,13 @@ const MapaScreen=(props:any) => {
   }, []);
 
   useEffect(() => {
+    AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA').then((user) => {
+      const userData = JSON.parse(user);
+      setUsuarioLogado(userData);
+    })
+    
     atualizarMapa();
-    const interval = setInterval(() => atualizarMapa(), 30000);
+    const interval = setInterval(() => atualizarMapa(), 3000);
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -181,7 +186,6 @@ const MapaScreen=(props:any) => {
   }
 
   function atualizarMapa() {
-    setLoading(true);
     console.log("trying to call " + API_URL + "/api/Postagem");
     axios({
       method: "GET",
@@ -437,7 +441,8 @@ const MapaScreen=(props:any) => {
       }
     })
     .catch((error) => {
-        console.log(error);
+        console.log('foto da postagem não encontrada');
+        //console.log(error);
     });
     setLoading(false);
   }
@@ -541,7 +546,7 @@ const MapaScreen=(props:any) => {
         </Marker>)
       })}
       </MapView>
-      <View>
+      {usuarioLogado?.perfil?.nome !== 'Especial' && <View>
         <Button
           onPress={criarPostagem}
           mode="contained"
@@ -550,7 +555,7 @@ const MapaScreen=(props:any) => {
         >
           Criar Postagem
         </Button>
-      </View>
+      </View>}
       <ModalPostagem 
         isVisible={modalPostagemVisible} 
         setIsVisible={setModalPostagemVisible}

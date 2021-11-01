@@ -79,7 +79,7 @@ const ContaScreen=(props: any) => {
     setUserData(null);
     Toast.show('Logout realizado com sucesso!', {
       duration: Toast.durations.SHORT,
-      position: Toast.positions.CENTER
+      position: Toast.positions.BOTTOM
     });
   }
 
@@ -97,11 +97,15 @@ const ContaScreen=(props: any) => {
     const usuarioId = userData.id;
     axios.patch(API_URL + '/api/usuario/' + usuarioId, model)
     .then(async response => {
+      console.log(response.data);
         if (response.status == 200 && response.data?.sucesso) {
-            Toast.show('Alteração realizada com sucesso!', {
-              duration: Toast.durations.SHORT,
-              position: Toast.positions.BOTTOM
-            });
+          const usuario = response.data.dados;
+          await AsyncStorage.setItem('@PORTAL_CIDADAO_USER_DATA', JSON.stringify(usuario));
+          setUserData(usuario);
+          Toast.show('Alteração realizada com sucesso!', {
+            duration: Toast.durations.SHORT,
+            position: Toast.positions.BOTTOM
+          });
         } else {
           Alert.alert('Erro ao realizar alteração de dados no servidor.')
         }
@@ -129,7 +133,7 @@ const ContaScreen=(props: any) => {
             setUserData(dados);
             Toast.show('Login realizado com sucesso!', {
               duration: Toast.durations.SHORT,
-              position: Toast.positions.CENTER
+              position: Toast.positions.BOTTOM
             });
             navigation.navigate('MapaScreen');
           } else {

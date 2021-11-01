@@ -1,4 +1,4 @@
-import { AntDesign, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { AntDesign, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Image, Dimensions, Text, View, ActivityIndicator, TextInput, Alert, TouchableOpacity } from "react-native";
@@ -37,12 +37,19 @@ export const ModalPostagem = ({
   ...props
 }: ModalProps) => {
   const [acaoCurtida, setAcaoCurtida] = useState(null);
+  const [postResolvido, setPostResolvido] = useState(false);
   const { control, handleSubmit, setValue } = useForm<Comentario>({
     defaultValues: {
       descricao: '',
     },
   });
 
+  useEffect(() => {
+    if (props.isVisible) {
+      setPostResolvido(false);
+    }
+      
+  }, [props.isVisible]); // "[]" makes sure the effect will run only once.
 
   async function atualizarCurtida(idCurtida: number, acao: boolean): Promise<void> {
     axios({
@@ -108,6 +115,10 @@ export const ModalPostagem = ({
   }
 
   async function curtirOuDescurtir(acao: boolean) {
+    if (props?.usuario?.perfil?.nome === 'Especial') {
+      Alert.alert('Somente cidadãos podem curtir ou descurtir uma postagem!');
+      return;
+    }
     props.setLoading(true);
     axios({
       method: "GET",
@@ -205,122 +216,157 @@ export const ModalPostagem = ({
 
   });
 
+  function resolverPostagem() {
+    if (postResolvido)
+      return;
+
+      axios.put(`${API_URL}/api/Postagem/${props.postagem?.id}/true`)
+      .then(response => {
+          const sucesso = response.status === 200 && response.data?.sucesso;
+          if (sucesso) {
+              Toast.show(response.data.mensagem.descricao, {
+                duration: Toast.durations.LONG,
+                position: Toast.positions.BOTTOM
+              });
+              setPostResolvido(true);
+          } else {
+            if (response.data.mensagem?.descricao) {
+              Alert.alert('Erro', response.data.mensagem.descricao);
+            } else {
+              Alert.alert('Erro', JSON.stringify(response.data));
+            }
+          }
+      })
+      .catch((err) => {
+        console.log('falha ao resolver postagem');
+          //Alert.alert(err);
+      })
+      .finally(() => { props.setLoading(false); });
+  }
+
   return (
-        <Modal isVisible={props.isVisible} >
+        <Modal isVisible={props.isVisible}>
+          <Modal.Container>
+              <Modal.Header title={props.postagem?.titulo} setIsVisible={props.setIsVisible}/>
+              {props.loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
 
-        <Modal.Container>
+              <ScrollView style={{maxHeight: 500}} persistentScrollbar={true}>
+                <Modal.Body>
+                  {props.midia ? <Image
+                    resizeMode={'cover'}
+                    style={styles.postImage}
+                    source={{uri: `data:image/gif;base64,${props.midia}`}}
+                  />
+                  :
+                  <Image
+                    resizeMode={'cover'}
+                    style={styles.postImage}
+                    source={require('../assets/images/placeholder.png')}
+                  />}
+                  <Text style={styles.postDescription}>
+                {/* It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.*/}
+                  {capitalizeFirstLetter(props.postagem?.descricao)}
+                  </Text>
 
-            <Modal.Header title={props.postagem?.titulo} setIsVisible={props.setIsVisible}/>
-            {props.loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
-
-            <ScrollView style={{maxHeight: 500}} persistentScrollbar={true}>
-              <Modal.Body>
-                {props.midia ? <Image
-                  resizeMode={'cover'}
-                  style={styles.postImage}
-                  source={{uri: `data:image/gif;base64,${props.midia}`}}
-                />
-                :
-                <Image
-                  resizeMode={'cover'}
-                  style={styles.postImage}
-                  source={require('../assets/images/placeholder.png')}
-                />}
-                <Text style={styles.postDescription}>
-               {/* It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.*/}
-                {capitalizeFirstLetter(props.postagem?.descricao)}
-                </Text>
-
-                <View style={styles.postInfo}>
-                  <View style={styles.reactionsContainer}>
-                    <View style={styles.likeContainer}>
-                      <AntDesign name='like1' size={24} color={acaoCurtida === true ? '#5B628F' : '#000'} onPress={() => curtirOuDescurtir(true)}/>
-                      <Text style={{fontSize: 18, marginLeft: 4}}>{props.postagem?.curtidas}</Text>
-                    </View>
-
-                    <View style={styles.likeContainer}>
-                      <AntDesign name='dislike1' size={24} color={acaoCurtida === false ? '#5B628F' : '#000'} onPress={() => curtirOuDescurtir(false)}/>
-                      <Text style={{fontSize: 18, marginLeft: 4}}>{props.postagem?.descurtidas}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.postTimeContainer}> 
-                    <AntDesign name="clockcircleo" size={22} color="black" style={{ marginRight: 10}}/>
-                    <Text style={{ fontWeight: '600', fontSize: 14}}>por {props.postagem?.usuario?.nome} há {obterTempoPost(props.postagem?.dataCadastro)}</Text>
-                  </View>
-                </View>
-
-                <View
-                  style={{
-                    borderBottomColor: '#C4C4C4',
-                    borderBottomWidth: 1,
-                    marginTop: 10,
-                    marginBottom: 10
-                  }}
-                />
-
-                <View style={styles.commentsSection}>
-                  <View style={styles.commentsSectionTitle}>
-                    <Text style={{textAlign: 'center', fontWeight: 'bold'}}>Comentários</Text>
-                  </View>
-
-                  <View style={styles.addCommentSection}>
-                    <View style={{alignItems: 'center', justifyContent: 'center', flex: 0.2}}>
-                      <MaterialIcons name="account-circle" size={48} color="rgba(50, 50, 50, 0.35)" />
-                    </View>
-
-                    <View style={{flexDirection: 'column', flex: 0.7}}>
-                      <View style={{marginBottom: 3}}>
-                        <Text>{props.usuario?.nome} (eu)</Text>
+                  <View style={styles.postInfo}>
+                    <View style={styles.reactionsContainer}>
+                      <View style={styles.likeContainer}>
+                        <AntDesign name='like1' size={24} color={acaoCurtida === true ? '#5B628F' : '#000'} onPress={() => curtirOuDescurtir(true)}/>
+                        <Text style={{fontSize: 18, marginLeft: 4}}>{props.postagem?.curtidas}</Text>
                       </View>
 
-                      <View style={{}}>
-                        <Controller
-                          control={control}
-                          name="descricao"
-                          render={({ field: { onBlur, onChange, value } }) => (
-                            <TextInput
-                            autoCapitalize="sentences"
-                            autoCompleteType="off"
-                            autoCorrect={true}
-                            keyboardType="default"
-                            onBlur={onBlur}
-                            onChangeText={onChange}
-                            onSubmitEditing={onSubmit}
-                            value={value}
-                            returnKeyType="send"
-                            placeholder="Digite aqui seu comentário..." 
-                            placeholderTextColor="rgba(0, 0, 0, 0.6)" 
-                            style={styles.commentInput} 
-                            textContentType="none"
-                            />
-                          )}
-                          
-                        />
-
+                      <View style={styles.likeContainer}>
+                        <AntDesign name='dislike1' size={24} color={acaoCurtida === false ? '#5B628F' : '#000'} onPress={() => curtirOuDescurtir(false)}/>
+                        <Text style={{fontSize: 18, marginLeft: 4}}>{props.postagem?.descurtidas}</Text>
                       </View>
                     </View>
 
-                    <TouchableOpacity style={{flex: 0.1, alignItems: 'center', justifyContent: 'flex-end'}} onPress={onSubmit}>
-                      <Ionicons name="send" size={28} color="#5B628F" />
-                    </TouchableOpacity>
+                    <View style={styles.postTimeContainer}> 
+                      <AntDesign name="clockcircleo" size={22} color="black" style={{ marginRight: 10}}/>
+                      <Text style={{ fontWeight: '600', fontSize: 14}}>por {props.postagem?.usuario?.nome} há {obterTempoPost(props.postagem?.dataCadastro)}</Text>
+                    </View>
+                  </View>
+                  {props?.usuario?.perfil?.nome === 'Especial' && <View>
+                      <TouchableOpacity style={[styles.solveButton, { backgroundColor: (postResolvido ? '#E5E7F5' : '#3F51B5') }]} onPress={resolverPostagem}>
+                        <View style={{flexDirection: 'row'}}>
+                          <MaterialCommunityIcons name="progress-check" size={20} color="white" />
+                          <Text style={{fontSize: 16, color: 'white', marginHorizontal: 5}}>Resolver Postagem</Text>
+                        </View>
+
+                      </TouchableOpacity>
+                  </View>}
+
+                  <View
+                    style={{
+                      borderBottomColor: '#C4C4C4',
+                      borderBottomWidth: 1,
+                      marginTop: 10,
+                      marginBottom: 10
+                    }}
+                  />
+
+                  <View style={styles.commentsSection}>
+                    <View style={styles.commentsSectionTitle}>
+                      <Text style={{textAlign: 'center', fontWeight: 'bold'}}>Comentários</Text>
+                    </View>
+
+                    <View style={styles.addCommentSection}>
+                      <View style={{alignItems: 'center', justifyContent: 'center', flex: 0.2}}>
+                        <MaterialIcons name="account-circle" size={48} color="rgba(50, 50, 50, 0.35)" />
+                      </View>
+
+                      <View style={{flexDirection: 'column', flex: 0.7}}>
+                        <View style={{marginBottom: 3}}>
+                          <Text>{props.usuario?.nome} (eu)</Text>
+                        </View>
+
+                        <View style={{}}>
+                          <Controller
+                            control={control}
+                            name="descricao"
+                            render={({ field: { onBlur, onChange, value } }) => (
+                              <TextInput
+                              autoCapitalize="sentences"
+                              autoCompleteType="off"
+                              autoCorrect={true}
+                              keyboardType="default"
+                              onBlur={onBlur}
+                              onChangeText={onChange}
+                              onSubmitEditing={onSubmit}
+                              value={value}
+                              returnKeyType="send"
+                              placeholder="Digite aqui seu comentário..." 
+                              placeholderTextColor="rgba(0, 0, 0, 0.6)" 
+                              style={styles.commentInput} 
+                              textContentType="none"
+                              />
+                            )}
+                            
+                          />
+
+                        </View>
+                      </View>
+
+                      <TouchableOpacity style={{flex: 0.1, alignItems: 'center', justifyContent: 'flex-end'}} onPress={onSubmit}>
+                        <Ionicons name="send" size={28} color="#5B628F" />
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.commentListSection}>
+                      {props.comentarios && props.comentarios.map((comentario: any, index: any) => {
+                        return <Comentario comentario={comentario} key={index}></Comentario>
+                      })}
+
+                    </View>
+                    
                   </View>
 
-                  <View style={styles.commentListSection}>
-                    {props.comentarios && props.comentarios.map((comentario: any, index: any) => {
-                      return <Comentario comentario={comentario} key={index}></Comentario>
-                    })}
+                </Modal.Body>
+              </ScrollView>
 
-                  </View>
-                  
-                </View>
-
-              </Modal.Body>
-            </ScrollView>
-
-            <Modal.Footer>
-            </Modal.Footer>
-        </Modal.Container>
+              <Modal.Footer>
+              </Modal.Footer>
+          </Modal.Container>
         </Modal>
   );
 };
@@ -436,5 +482,13 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     paddingLeft: 10,
     paddingRight: 10
+  },
+  solveButton: {
+    flex: 1,
+    alignItems: 'center',
+    textAlign: 'center',
+    borderRadius: 5,
+    paddingVertical: 7,
+    marginVertical: 10
   }
 });
