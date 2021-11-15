@@ -10,9 +10,9 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import getLoggedUser from '../hooks/getLoggedUser';
 import {API_URL} from '@env'
 import { MaterialIcons } from '@expo/vector-icons';
+import { Modal } from '../components/Modal';
 
 interface FormData {
   login: string;
@@ -24,18 +24,30 @@ interface AlteracaoFormData {
   email: string;
 }
 
+interface EsqueciSenhaFormData {
+  email: string;
+}
+
 type ContaScreenProp = StackNavigationProp<RootStackParamList, 'ContaScreen'>;
 const ContaScreen=(props: any) => {
   const returnScreen = props?.route?.params?.returnScreen ?? 'MapaScreen';
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [ready, setReady] = useState(false);
+  const [showModalRedefinicao, setShowModalRedefinicao] = useState(false);
+  const [showModalEsqueciSenha, setShowModalEsqueciSenha] = useState(false);
   const navigation = useNavigation<ContaScreenProp>();
 
   const { control, handleSubmit } = useForm<FormData>({
     defaultValues: {
       login: '',
       senha: '',
+    },
+  });
+
+  const { control: esqueciSenhaControl, handleSubmit: esqueciSenhaSubmit } = useForm<EsqueciSenhaFormData>({
+    defaultValues: {
+      email: '',
     },
   });
 
@@ -82,6 +94,45 @@ const ContaScreen=(props: any) => {
       position: Toast.positions.BOTTOM
     });
   }
+
+  async function redefinirSenha() {
+    setLoading(true);
+
+    axios.post(API_URL + '/api/usuario/esqueci-senha/' + userData.email)
+    .then(async response => {
+        if (response.status == 200) {
+          Toast.show('E-mail de redefinição de senha enviado, confira sua caixa de entrada.');
+        } else {
+          Alert.alert('Erro ao enviar e-mail de refinição de senha')
+        }
+    })
+    .catch((err) => {
+        console.log(err);
+    })
+    .finally(() => { setLoading(false); setShowModalRedefinicao(false); });
+  }
+
+  const onSubmitEsqueciSenha = esqueciSenhaSubmit(({ email }) => {
+    if (!email || email === '') {
+      Alert.alert('Digite um e-mail válido');
+      return;
+    }
+
+    setLoading(true);
+
+    axios.post(API_URL + '/api/usuario/esqueci-senha/' + email)
+    .then(async response => {
+        if (response.status == 200) {
+          Toast.show('E-mail de redefinição de senha enviado, confira sua caixa de entrada.');
+        } else {
+          Alert.alert('Erro ao enviar e-mail de refinição de senha')
+        }
+    })
+    .catch((err) => {
+        console.log(err);
+    })
+    .finally(() => { setLoading(false); setShowModalEsqueciSenha(false); });
+  });
 
   const onSubmitUpdate = alteracaoSubmit(({ nome, email }) => {
     console.log(nome);
@@ -214,8 +265,32 @@ const ContaScreen=(props: any) => {
               <Button
                 mode="outlined"
                 style={styles.resetPasswordButton}
-                onPress={logout}
+                onPress={() => setShowModalRedefinicao(true)}
               >Redefinir senha</Button>
+                <Modal isVisible={showModalRedefinicao}>
+                  <Modal.Container>
+                    <Modal.Header title="Redefinir senha" setIsVisible={undefined}/>
+                    <Modal.Body>
+                      <Text>Um e-mail será enviado contendo um link para iniciar o processo de redefinição de senha. Deseja prosseguir?</Text>
+                    </Modal.Body>
+                    <Modal.Footer>
+                      <Button 
+                          style={{ marginRight: 10}} 
+                          mode="contained" 
+                          onPress={() => { redefinirSenha()}}
+                          >
+                              <Text>SIM</Text>
+                        </Button>
+                        <Button 
+                          style={{ marginLeft: 10}} 
+                          mode="contained" 
+                          onPress={() => setShowModalRedefinicao(false)}
+                          >
+                              <Text>NÃO</Text>
+                        </Button>
+                    </Modal.Footer>
+                  </Modal.Container>
+                </Modal>
           </View>
         </View>
       )
@@ -278,6 +353,46 @@ const ContaScreen=(props: any) => {
                     mode="contained"
                     onPress={onSubmit}
                   >Login</Button>
+                  <Button
+                    style={styles.fbLoginButton}
+                    onPress={() => setShowModalEsqueciSenha(true)}
+                    color="#3897f1"
+                  >Esqueci minha senha</Button>
+                <Modal isVisible={showModalEsqueciSenha}>
+                  <Modal.Container>
+                    <Modal.Header title="Esqueci senha" setIsVisible={undefined}/>
+                    <Modal.Body>
+                      <Controller
+                        control={esqueciSenhaControl}
+                        name="email"
+                        render={({ field: { onBlur, onChange, value } }) => (
+                          <TextInput
+                            autoCapitalize="none"
+                            autoCompleteType="email"
+                            autoCorrect={false}
+                            keyboardType="email-address"
+                            onBlur={onBlur}
+                            onChangeText={onChange}
+                            returnKeyType="next"
+                            placeholder="Digite o e-mail cadastrado" 
+                            placeholderTextColor="#c4c3cb" 
+                            textContentType="username"
+                            value={value}
+                          />
+                        )}
+                      />
+                    </Modal.Body>
+                    <Modal.Footer>
+                      <Button 
+                          style={{ marginRight: 10}} 
+                          mode="contained" 
+                          onPress={onSubmitEsqueciSenha}
+                          >
+                              <Text>ENVIAR</Text>
+                        </Button>
+                    </Modal.Footer>
+                  </Modal.Container>
+                </Modal>
                   <Button
                     style={styles.fbLoginButton}
                     onPress={() => navigation.navigate('MapaScreen')}
