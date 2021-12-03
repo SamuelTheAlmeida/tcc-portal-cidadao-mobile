@@ -177,11 +177,44 @@ const MapaScreen=(props:any) => {
   function obterIconeMarker(post: any): ImageURISource {
     switch (post.subcategoria.codigo) {
       case 1:
-        return require('../assets/images/red-dot.v1.png');
+        return obterIconePostVermelho(post.confiabilidade);
       case 2:
-        return require('../assets/images/yellow-dot.v1.png');
+        return obterIconePostAmarelo(post.confiabilidade);
       case 3:
-        return require('../assets/images/green-dot.v1.png');
+        return obterIconePostVerde(post.confiabilidade);
+    }
+  }
+
+  function obterIconePostVermelho(confiabilidade: string) {
+    switch (confiabilidade) {
+      case 'Alta':
+        return require(`../assets/images/red-dot.g.png`);
+      case 'Média':
+        return require(`../assets/images/red-dot.m.png`);
+      default:
+          return require(`../assets/images/red-dot.p.png`);
+    }
+  }
+
+  function obterIconePostAmarelo(confiabilidade: string) {
+    switch (confiabilidade) {
+      case 'Alta':
+        return require(`../assets/images/yellow-dot.g.png`);
+      case 'Média':
+        return require(`../assets/images/yellow-dot.m.png`);
+      default:
+          return require(`../assets/images/yellow-dot.p.png`);
+    }
+  }
+
+  function obterIconePostVerde(confiabilidade: string) {
+    switch (confiabilidade) {
+      case 'Alta':
+        return require(`../assets/images/green-dot.g.png`);
+      case 'Média':
+        return require(`../assets/images/green-dot.m.png`);
+      default:
+          return require(`../assets/images/green-dot.p.png`);
     }
   }
 

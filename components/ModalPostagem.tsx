@@ -38,6 +38,7 @@ export const ModalPostagem = ({
 }: ModalProps) => {
   const [acaoCurtida, setAcaoCurtida] = useState(null);
   const [postResolvido, setPostResolvido] = useState(false);
+  const [postExcluido, setPostExcluido] = useState(false);
   const { control, handleSubmit, setValue } = useForm<Comentario>({
     defaultValues: {
       descricao: '',
@@ -244,6 +245,56 @@ export const ModalPostagem = ({
       .finally(() => { props.setLoading(false); });
   }
 
+  function excluirPostagem() {
+    if (postExcluido)
+      return;
+
+      Alert.alert(
+        "Confirmação",
+        "Tem certeza que deseja excluir a postagem?",
+        [
+          {
+            text: "Voltar",
+            onPress: () => null
+          },
+          {
+            text: "Confirmar",
+            onPress: () => httpExcluirPostagem(),
+            style: "cancel",
+          },
+        ],
+        {
+          cancelable: true,
+          onDismiss: () => null
+        }
+      );
+  }
+
+  function httpExcluirPostagem() {
+    axios.put(`${API_URL}/api/Postagem/remover/${props.postagem?.id}/true`)
+    .then(response => {
+        const sucesso = response.status === 200 && response.data?.sucesso;
+        if (sucesso) {
+            Toast.show(response.data.mensagem.descricao, {
+              duration: Toast.durations.LONG,
+              position: Toast.positions.BOTTOM
+            });
+            setPostExcluido(true);
+        } else {
+          if (response.data.mensagem?.descricao) {
+            Alert.alert('Erro', response.data.mensagem.descricao);
+          } else {
+            Alert.alert('Erro', JSON.stringify(response.data));
+          }
+        }
+    })
+    .catch((err) => {
+      console.log('falha ao resolver postagem');
+        //Alert.alert(err);
+    })
+    .finally(() => { props.setLoading(false); });
+  }
+
   return (
         <Modal isVisible={props.isVisible}>
           <Modal.Container>
@@ -252,6 +303,7 @@ export const ModalPostagem = ({
 
               <ScrollView style={{maxHeight: 500}} persistentScrollbar={true}>
                 <Modal.Body>
+                  <Text style={{ fontSize: 12, textAlign: 'center'}}>Confiabilidade: {props.postagem?.confiabilidade}</Text>
                   {props.midia ? <Image
                     resizeMode={'cover'}
                     style={styles.postImage}
@@ -286,11 +338,21 @@ export const ModalPostagem = ({
                       <Text style={{ fontWeight: '600', fontSize: 14}}>por {props.postagem?.usuario?.nome} há {obterTempoPost(props.postagem?.dataCadastro)}</Text>
                     </View>
                   </View>
-                  {props?.usuario?.perfil?.nome === 'Especial' && <View>
+                  {props?.usuario?.perfil?.nome === 'Administrador' && <View>
                       <TouchableOpacity style={[styles.solveButton, { backgroundColor: (postResolvido ? '#E5E7F5' : '#3F51B5') }]} onPress={resolverPostagem}>
                         <View style={{flexDirection: 'row'}}>
                           <MaterialCommunityIcons name="progress-check" size={20} color="white" />
                           <Text style={{fontSize: 16, color: 'white', marginHorizontal: 5}}>Resolver Postagem</Text>
+                        </View>
+
+                      </TouchableOpacity>
+                  </View>}
+
+                  {props?.usuario?.perfil?.nome === 'Cidadao' && <View>
+                      <TouchableOpacity style={[styles.solveButton, { backgroundColor: (postExcluido ? '#E5E7F5' : '#f70d1a') }]} onPress={excluirPostagem}>
+                        <View style={{flexDirection: 'row'}}>
+                          <AntDesign name="delete" size={20} color="white" />
+                          <Text style={{fontSize: 16, color: 'white', marginHorizontal: 5}}>Excluir Postagem</Text>
                         </View>
 
                       </TouchableOpacity>
