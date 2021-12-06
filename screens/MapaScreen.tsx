@@ -26,6 +26,12 @@ interface CategoriaFiltro {
   checked: boolean;
 }
 
+interface ConfiabilidadeFiltro {
+  confiabilidade: string;
+  count: number;
+  checked: boolean;
+}
+
 interface SubcategoriaFiltro {
   subcategoria: string;
   count: number;
@@ -66,6 +72,10 @@ const MapaScreen=(props:any) => {
   const categoriasRef = React.useRef([]);
   categoriasRef.current = categorias;
 
+  const [confiabilidades, setConfiabilidades] = React.useState(new Array<ConfiabilidadeFiltro>());
+  const confiabilidadesRef = React.useRef([]);
+  confiabilidadesRef.current = confiabilidades;
+
   const [subcategorias, setSubcategorias] = React.useState(new Array<SubcategoriaFiltro>());
   const subcategoriasRef = React.useRef([]);
   subcategoriasRef.current = subcategorias;
@@ -90,6 +100,12 @@ const MapaScreen=(props:any) => {
     const newArray = [...categorias];
     newArray[index].checked = !categorias[index].checked;
     setCategorias(newArray);
+  }
+
+  function toggleConfiabilidadeChecked(index: number) {
+    const newArray = [...confiabilidades];
+    newArray[index].checked = !confiabilidades[index].checked;
+    setConfiabilidades(newArray);
   }
 
   function toggleSubcategoriaChecked(index: number) {
@@ -286,6 +302,33 @@ const MapaScreen=(props:any) => {
           }
         );
         setCategorias(arrayCategorias);
+
+        const confiabilidadesSelecionadas = confiabilidadesRef.current.filter(x => x.checked);
+        const nomesConfiabilidades = confiabilidadesSelecionadas.map((item) => { return item.confiabilidade });
+        if (confiabilidadesSelecionadas.length > 0) {
+          posts = response.data.dados.filter((x: { confiabilidade: string; }) => nomesConfiabilidades.includes(x.confiabilidade));
+        } else {
+          posts = response.data.dados;
+        }
+
+        const arrayConfiabilidades = [...confiabilidadesRef.current];
+        arrayConfiabilidades.forEach((item) => item.count = 0);
+        response.data.dados.map(
+          (item: any) => { 
+            if (arrayConfiabilidades.filter(x => x.confiabilidade == item.confiabilidade).length > 0) {
+              const index = arrayConfiabilidades.findIndex(x => x.confiabilidade == item.confiabilidade);
+              arrayConfiabilidades[index].count++;
+            } else {
+              const isAlreadyChecked = nomesConfiabilidades.includes(item.confiabilidade);
+              arrayConfiabilidades.push({
+                confiabilidade: item.confiabilidade,
+                count: 1,
+                checked: isAlreadyChecked
+              });
+            }
+          }
+        );
+        setConfiabilidades(arrayConfiabilidades);
 
         const subcategoriasSelecionadas = subcategoriasRef.current.filter(x => x.checked);
         const nomesSubcategorias = subcategoriasSelecionadas.map((item) => { return item.subcategoria });
@@ -496,6 +539,21 @@ const MapaScreen=(props:any) => {
         <Dialog.Content style={{height: '70%'}}>
           <Dialog.ScrollArea style={{height: '70%'}}>
             <ScrollView contentContainerStyle={{paddingHorizontal: 1}}>
+            <Text style={{fontSize: 14}}>Confiabilidade</Text>
+            {confiabilidades && confiabilidades.map((item,index) => {
+                  return (
+                        <Checkbox.Item
+                        labelStyle={{ fontSize: 12}}
+                        key={index}
+                        color='rgba(91, 98, 143, 0.75)'
+                        label={`${item.confiabilidade} (${item.count})`}
+                        status={item.checked === true ? 'checked' : 'unchecked'}
+                        onPress={() => toggleConfiabilidadeChecked(index)}
+                      />
+                  );
+              })}
+
+
             <Text style={{fontSize: 14}}>Categorias</Text>
               {categorias && categorias.map((item,index) => {
                   return (
