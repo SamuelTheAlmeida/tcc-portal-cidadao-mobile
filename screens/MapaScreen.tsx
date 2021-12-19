@@ -235,7 +235,7 @@ const MapaScreen=(props:any) => {
   }
 
   function atualizarMapa() {
-    console.log("trying to call " + API_URL + "/api/Postagem");
+    //console.log("trying to call " + API_URL + "/api/Postagem");
     axios({
       method: "GET",
       url: API_URL + "/api/Postagem",
@@ -249,13 +249,19 @@ const MapaScreen=(props:any) => {
     })
       .then((response) => {
         const bairrosSelecionados = bairrosRef.current.filter(x => x.checked);
+        //console.log('bairros selecionados');
+        //console.log(bairrosSelecionados);
         const nomesBairros = bairrosSelecionados.map((item) => { return item.bairro });
+        //console.log('nomes bairros');
+        //console.log(nomesBairros);
         var posts = [];
         if (bairrosSelecionados.length > 0) {
           posts = response.data.dados.filter((x: { bairro: string; }) => nomesBairros.includes(x.bairro));
         } else {
           posts = response.data.dados;
         }
+        //console.log('posts');
+        //console.log(posts);
 
         const arrayBairros = [...bairrosRef.current];
         arrayBairros.forEach((item) => item.count = 0);
@@ -308,7 +314,7 @@ const MapaScreen=(props:any) => {
         if (confiabilidadesSelecionadas.length > 0) {
           posts = response.data.dados.filter((x: { confiabilidade: string; }) => nomesConfiabilidades.includes(x.confiabilidade));
         } else {
-          posts = response.data.dados;
+          posts = posts;
         }
 
         const arrayConfiabilidades = [...confiabilidadesRef.current];
@@ -361,6 +367,7 @@ const MapaScreen=(props:any) => {
       })
       .catch((error) => {
         Alert.alert('Error', error.message);
+        Alert.alert('Tried to call ' + API_URL + "/api/Postagem");
       })
       .finally(() => setLoading(false));
   }
@@ -452,7 +459,6 @@ const MapaScreen=(props:any) => {
     const idUser = user?.id;
     setUsuarioLogado(user);
 
-    
     axios({
       method: "GET",
       url: `${API_URL}/api/Curtida/${idPostagem}/${idUser}`,
@@ -467,6 +473,8 @@ const MapaScreen=(props:any) => {
       const result = response.data;
       if (result.dados) {
         setCurtidaUsuario({id: result.dados.id, acao: result.dados.acao});
+      } else {
+        setCurtidaUsuario(null);
       }
     })
     .catch((error) => {
@@ -514,10 +522,13 @@ const MapaScreen=(props:any) => {
       if (response.data && response.data.fileContents) {
         const midia = response.data.fileContents;
         setMidiaPostagem(midia);
+      } else {
+        setMidiaPostagem(null);
       }
     })
     .catch((error) => {
         console.log('foto da postagem não encontrada');
+        setMidiaPostagem(null);
         //console.log(error);
     });
     setLoading(false);

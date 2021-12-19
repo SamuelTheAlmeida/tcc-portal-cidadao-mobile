@@ -18,7 +18,7 @@ interface Comentario {
 }
 
 function obterTempoPost(data: any) {
-  const diferencaMinutos = ((new Date().getTime() - new Date(data).getTime()) / 1000 ) / 60;
+  const diferencaMinutos = (((new Date().getTime() - new Date(data).getTime()) / 1000 ) / 60) - 180;
 
   if (diferencaMinutos > 59) {
     const diferencaEmHoras = diferencaMinutos / 60;

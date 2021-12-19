@@ -77,6 +77,7 @@ export default function NovoCadastroScreen() {
         }
     })
     .catch((err) => {
+        Alert.alert(err.message);
         console.log(err);
     })
     .finally(() => setLoading(false));

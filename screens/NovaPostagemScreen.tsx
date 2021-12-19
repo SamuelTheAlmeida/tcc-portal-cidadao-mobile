@@ -354,7 +354,8 @@ const NovaPostagemScreen=(props: any) => {
                     textInputContainer: {
                       backgroundColor: 'transparent',
                       margin: 0,
-                      padding: 0
+                      padding: 0,
+                      marginTop: 50
                     },
                     textInput: {
                       height: 60,
@@ -524,12 +525,6 @@ const NovaPostagemScreen=(props: any) => {
                 style={styles.modalRightButtonStyle}
                 onPress={() => navigation.navigate('Root')}>
                     <Text>Voltar</Text>
-                </Button>
-                <Button 
-                color="#3897f1"
-                style={styles.modalRightButtonStyle}
-                onPress={() => { AsyncStorage.setItem('postInserido', 'testeee'); navigation.navigate('Root'); } }>
-                    <Text>Redirect</Text>
                 </Button>
             </View>
           </View>

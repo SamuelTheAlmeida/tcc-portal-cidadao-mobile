@@ -95,6 +95,13 @@ const ContaScreen=(props: any) => {
     });
   }
 
+  function converterNomePerfil(nomePerfil: string) {
+    if (nomePerfil === 'Cidadao') 
+      return 'Cidadão';
+    else 
+      return nomePerfil;
+  }
+
   async function redefinirSenha() {
     setLoading(true);
 
@@ -107,6 +114,7 @@ const ContaScreen=(props: any) => {
         }
     })
     .catch((err) => {
+        Alert.alert(err.message);
         console.log(err);
     })
     .finally(() => { setLoading(false); setShowModalRedefinicao(false); });
@@ -129,6 +137,7 @@ const ContaScreen=(props: any) => {
         }
     })
     .catch((err) => {
+        Alert.alert(err.message);
         console.log(err);
     })
     .finally(() => { setLoading(false); setShowModalEsqueciSenha(false); });
@@ -162,6 +171,7 @@ const ContaScreen=(props: any) => {
         }
     })
     .catch((err) => {
+        Alert.alert(err.message);
         console.log(err);
     })
     .finally(() => setLoading(false));
@@ -196,6 +206,7 @@ const ContaScreen=(props: any) => {
         }
     })
     .catch((err) => {
+        Alert.alert(err.message);
         console.log(err);
     })
     .finally(() => setLoading(false));
@@ -207,7 +218,7 @@ const ContaScreen=(props: any) => {
           <View style={styles.userHeader}>
             <MaterialIcons name="account-circle" size={128} color="#5B628F" />
             <Text style={styles.userName}>{userData.nome}</Text>
-            <Text style={styles.userRole}>{userData.perfil?.nome}</Text>
+            <Text style={styles.userRole}>{converterNomePerfil(userData.perfil?.nome)}</Text>
             <Button
                 mode="outlined"
                 style={styles.logoutButton}
@@ -502,7 +513,8 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontWeight: 'bold',
-    fontSize: 40
+    fontSize: 40,
+    textAlign: 'center'
   },
   userRole: {
     fontSize: 18,
