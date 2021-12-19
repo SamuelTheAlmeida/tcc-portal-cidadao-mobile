@@ -478,6 +478,7 @@ const MapaScreen=(props:any) => {
       }
     })
     .catch((error) => {
+        Alert.alert(error.message);
         console.log(error);
     });
   }
@@ -501,6 +502,7 @@ const MapaScreen=(props:any) => {
       }
     })
     .catch((error) => {
+        Alert.alert(error.message);
         console.log(error);
     });
     setLoading(false);

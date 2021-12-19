@@ -143,7 +143,7 @@ const ContaScreen=(props: any) => {
     .finally(() => { setLoading(false); setShowModalEsqueciSenha(false); });
   });
 
-  const onSubmitUpdate = alteracaoSubmit(({ nome, email }) => {
+  const onSubmitUpdate = alteracaoSubmit(async ({ nome, email }) => {
     console.log(nome);
     console.log(email);
     
@@ -155,7 +155,12 @@ const ContaScreen=(props: any) => {
 
     console.log(userData);
     const usuarioId = userData.id;
-    axios.patch(API_URL + '/api/usuario/' + usuarioId, model)
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
+    axios.patch(API_URL + '/api/usuario/' + usuarioId, model, {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
     .then(async response => {
       console.log(response.data);
         if (response.status == 200 && response.data?.sucesso) {
@@ -177,14 +182,19 @@ const ContaScreen=(props: any) => {
     .finally(() => setLoading(false));
   });
 
-  const onSubmit = handleSubmit(({ login, senha }) => {
+  const onSubmit = handleSubmit(async ({ login, senha }) => {
     setLoading(true);
     let model = {
       login,
       senha
     };
-
-    axios.post(API_URL + '/api/usuario/login', model)
+    
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
+    axios.post(API_URL + '/api/usuario/login', model, {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
     .then(async response => {
         if (response.status == 200) {
           if (response.data?.sucesso) {

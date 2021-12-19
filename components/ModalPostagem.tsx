@@ -8,6 +8,7 @@ import {API_URL} from '@env'
 import { ScrollView } from "react-native-gesture-handler";
 import { Controller, useForm } from "react-hook-form";
 import Toast from "react-native-root-toast";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type ModalProps = {
   [x: string]: any;
@@ -53,10 +54,12 @@ export const ModalPostagem = ({
   }, [props.isVisible]); // "[]" makes sure the effect will run only once.
 
   async function atualizarCurtida(idCurtida: number, acao: boolean): Promise<void> {
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
     axios({
       method: "PUT",
       url: `${API_URL}/api/Curtida/${idCurtida}/${acao}`,
       headers: {
+        "Authorization": "Bearer " + token,
         "Content-Type": "application/json",
         Accept: "application/json"
       },
@@ -67,15 +70,18 @@ export const ModalPostagem = ({
       //buscarLike();
     })
     .catch((error) => {
+        Alert.alert(error.message);
         console.log(error);
     });
   }
 
   async function removerCurtida(idCurtida: number): Promise<void> {
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
     axios({
       method: "DELETE",
       url: `${API_URL}/api/Curtida/${idCurtida}`,
       headers: {
+        "Authorization": "Bearer " + token,
         "Content-Type": "application/json",
         Accept: "application/json"
       },
@@ -86,11 +92,13 @@ export const ModalPostagem = ({
       //buscarLike();
     })
     .catch((error) => {
+        Alert.alert(error.message);
         console.log(error);
     });
   }
 
   async function inserirCurtida(acao: boolean, idUsuario: number, idPostagem: number) {
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
     axios({
       method: "POST",
       url: `${API_URL}/api/Curtida`,
@@ -101,6 +109,7 @@ export const ModalPostagem = ({
         postagemId: idPostagem
       },
       headers: {
+        "Authorization": "Bearer " + token,
         "Content-Type": "application/json",
         Accept: "application/json"
       },
@@ -111,6 +120,7 @@ export const ModalPostagem = ({
       //buscarLike();
     })
     .catch((error) => {
+        Alert.alert(error.message);
         console.log(error);
     });
   }
@@ -120,11 +130,14 @@ export const ModalPostagem = ({
       Alert.alert('Somente cidadãos podem curtir ou descurtir uma postagem!');
       return;
     }
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
+
     props.setLoading(true);
     axios({
       method: "GET",
       url: `${API_URL}/api/curtida/${props.postagem?.id}/${props.usuario?.id}`,
       headers: {
+        "Authorization": "Bearer " + token,
         "Content-Type": "application/json",
         Accept: "application/json"
       },
@@ -146,6 +159,7 @@ export const ModalPostagem = ({
       }
     })
     .catch((error) => {
+        Alert.alert(error.message);
         console.log(error);
     })
     .finally(() => {
@@ -175,6 +189,7 @@ export const ModalPostagem = ({
       }
     })
     .catch((error) => {
+        Alert.alert(error.message);
         console.log(error);
     });
     props.setLoading(false);
@@ -193,7 +208,12 @@ export const ModalPostagem = ({
       postagemId: props.postagem?.id
     };
 
-    axios.post(API_URL + '/api/Comentario', model)
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
+    axios.post(API_URL + '/api/Comentario', model, {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
     .then(response => {
         const sucesso = response.status === 200 && response.data?.sucesso;
         if (sucesso) {
@@ -217,11 +237,16 @@ export const ModalPostagem = ({
 
   });
 
-  function resolverPostagem() {
+  async function resolverPostagem() {
     if (postResolvido)
       return;
 
-      axios.put(`${API_URL}/api/Postagem/${props.postagem?.id}/true`)
+      const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
+      axios.put(`${API_URL}/api/Postagem/${props.postagem?.id}/true`, {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
       .then(response => {
           const sucesso = response.status === 200 && response.data?.sucesso;
           if (sucesso) {
@@ -270,8 +295,13 @@ export const ModalPostagem = ({
       );
   }
 
-  function httpExcluirPostagem() {
-    axios.put(`${API_URL}/api/Postagem/remover/${props.postagem?.id}/true`)
+  async function httpExcluirPostagem() {
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
+    axios.put(`${API_URL}/api/Postagem/remover/${props.postagem?.id}/true`, {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
     .then(response => {
         const sucesso = response.status === 200 && response.data?.sucesso;
         if (sucesso) {

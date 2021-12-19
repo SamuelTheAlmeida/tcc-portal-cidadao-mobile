@@ -172,6 +172,7 @@ const NovaPostagemScreen=(props: any) => {
         }
     })
     .catch((err) => {
+        Alert.alert(err.message);
         console.log(err);
     })
     .finally(() => setLoading(false));
@@ -247,6 +248,8 @@ const NovaPostagemScreen=(props: any) => {
       setLoading(false);
       return;
     }
+
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
     let model = {
       titulo,
       categoriaId: Number(categoriaId),
@@ -275,7 +278,8 @@ const NovaPostagemScreen=(props: any) => {
     console.log('calling ' + API_URL + '/api/Postagem');
     axios.post(API_URL + '/api/Postagem', data, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
+        'Authorization': 'Bearer ' + token
       }
     })
     .then(response => {
@@ -303,8 +307,8 @@ const NovaPostagemScreen=(props: any) => {
         }
     })
     .catch((err) => {
+      Alert.alert(err.message);
       console.log(err);
-        //Alert.alert(err);
     })
     .finally(() => { if (!sucesso) setLoading(false) });
 
