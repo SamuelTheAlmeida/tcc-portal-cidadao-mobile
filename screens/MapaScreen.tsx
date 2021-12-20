@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ImageURISource } from 'react-native';
 import { ModalPostagem } from '../components/ModalPostagem';
 import {API_URL} from '@env'
+import Spinner from 'react-native-loading-spinner-overlay';
 
 interface BairroFiltro {
   bairro: string;
@@ -472,8 +473,11 @@ const MapaScreen=(props:any) => {
     }).then((response) => {
       const result = response.data;
       if (result.dados) {
+        console.log('MapaScreen - obterLike() - response com dados');
         setCurtidaUsuario({id: result.dados.id, acao: result.dados.acao});
+        console.log('MapaScreen - obterLike() - setando curtida para ' + result.dados.acao);
       } else {
+        console.log('MapaScreen - obterLike() - response sem dados - setando curtida para null');
         setCurtidaUsuario(null);
       }
     })
@@ -617,7 +621,13 @@ const MapaScreen=(props:any) => {
         </Dialog.Actions>
       </Dialog>
     </Portal>
-    {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+    {/*loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />*/}
+    <Spinner
+      visible={loading}
+      color={'#FFF'}
+      textContent={'Carregando...'}
+      textStyle={{ color: '#FFF', fontSize: 30, textShadowOffset: {width: 2, height: 2}, textShadowColor: 'black', textShadowRadius: 2 }}
+    />
     <MapView
       showsPointsOfInterest = {false}
       customMapStyle = {customMapStyles}
@@ -671,6 +681,7 @@ const MapaScreen=(props:any) => {
         comentarios={comentarios}
         midia={midiaPostagem}
         obterComentarios={obterComentarios}
+        curtidaUsuario={curtidaUsuario}
         >
 
       </ModalPostagem>

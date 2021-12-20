@@ -9,6 +9,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { Controller, useForm } from "react-hook-form";
 import Toast from "react-native-root-toast";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Spinner from 'react-native-loading-spinner-overlay';
 
 type ModalProps = {
   [x: string]: any;
@@ -37,9 +38,11 @@ function obterTempoPost(data: any) {
 export const ModalPostagem = ({
   ...props
 }: ModalProps) => {
-  const [acaoCurtida, setAcaoCurtida] = useState(null);
   const [postResolvido, setPostResolvido] = useState(false);
   const [postExcluido, setPostExcluido] = useState(false);
+  const [postagemModel, setPostagemModel] = useState(null);
+  const [clickedLike, setClickedLike] = useState(false);
+  const [clickedDislike, setClickedDislike] = useState(false);
   const { control, handleSubmit, setValue } = useForm<Comentario>({
     defaultValues: {
       descricao: '',
@@ -53,21 +56,25 @@ export const ModalPostagem = ({
       
   }, [props.isVisible]); // "[]" makes sure the effect will run only once.
 
-  async function atualizarCurtida(idCurtida: number, acao: boolean): Promise<void> {
+  useEffect(() => {
+    console.log('postagem enviada pela MapaScreen');
+    setPostagemModel(props.postagem);
+    setClickedDislike(false);
+    setClickedLike(false);
+    buscarLike();
+  }, [props.postagem]);
+
+  async function atualizarCurtidaPostLike(idCurtida: number) {
+    console.log('atualizarCurtidaPostLike ' + idCurtida);
     const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
     axios({
       method: "PUT",
-      url: `${API_URL}/api/Curtida/${idCurtida}/${acao}`,
+      url: `${API_URL}/api/Curtida/${idCurtida}/true`,
       headers: {
-        "Authorization": "Bearer " + token,
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      httpsAgent: {  
-        rejectUnauthorized: false
+        "Authorization": "Bearer " + token
       }
     }).then((response) => {
-      //buscarLike();
+
     })
     .catch((error) => {
         Alert.alert(error.message);
@@ -75,21 +82,35 @@ export const ModalPostagem = ({
     });
   }
 
-  async function removerCurtida(idCurtida: number): Promise<void> {
+  async function atualizarCurtidaPostDislike(idCurtida: number) {
+    console.log('atualizarCurtidaPostDislike ' + idCurtida);
+    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
+    axios({
+      method: "PUT",
+      url: `${API_URL}/api/Curtida/${idCurtida}/false`,
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    }).then((response) => {
+      setPostagemModel({...postagemModel, descurtidas: postagemModel.descurtidas+1, curtidas: postagemModel.curtidas-1});
+    })
+    .catch((error) => {
+        Alert.alert(error.message);
+        console.log(error);
+    });
+  }
+  
+  async function removerCurtidaPost(idCurtida: number) {
+    console.log('removerCurtidaPost ' + idCurtida);
     const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
     axios({
       method: "DELETE",
       url: `${API_URL}/api/Curtida/${idCurtida}`,
       headers: {
-        "Authorization": "Bearer " + token,
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      httpsAgent: {  
-        rejectUnauthorized: false
+        "Authorization": "Bearer " + token
       }
     }).then((response) => {
-      //buscarLike();
+      postagemModel.curtidas--;
     })
     .catch((error) => {
         Alert.alert(error.message);
@@ -97,7 +118,8 @@ export const ModalPostagem = ({
     });
   }
 
-  async function inserirCurtida(acao: boolean, idUsuario: number, idPostagem: number) {
+  async function inserirCurtidaPost(idUser: number, acao: boolean) {
+    console.log('inserirCurtidaPost ');
     const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
     axios({
       method: "POST",
@@ -105,94 +127,128 @@ export const ModalPostagem = ({
       data: {
         acao: acao,
         pontos: 1,
-        usuarioId: idUsuario,
-        postagemId: idPostagem
+        usuarioId: idUser,
+        postagemId: postagemModel.id
       },
       headers: {
-        "Authorization": "Bearer " + token,
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      httpsAgent: {  
-        rejectUnauthorized: false
+        "Authorization": "Bearer " + token
       }
     }).then((response) => {
-      //buscarLike();
+
     })
     .catch((error) => {
         Alert.alert(error.message);
         console.log(error);
-    });
+    })
   }
 
-  async function curtirOuDescurtir(acao: boolean) {
-    if (props?.usuario?.perfil?.nome === 'Especial') {
-      Alert.alert('Somente cidadãos podem curtir ou descurtir uma postagem!');
+  async function buscarLike() {
+    if (!postagemModel)
       return;
-    }
-    const token = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_TOKEN');
+    const userData = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA');
+    const user = userData ? JSON.parse(userData) : null;
+    const idUser = user?.id;
 
-    props.setLoading(true);
     axios({
       method: "GET",
-      url: `${API_URL}/api/curtida/${props.postagem?.id}/${props.usuario?.id}`,
+      url: `${API_URL}/api/Curtida/${postagemModel?.id}/${idUser}`,
       headers: {
-        "Authorization": "Bearer " + token,
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      httpsAgent: {  
-        rejectUnauthorized: false
+        "Content-Type": "application/json"
       }
     }).then((response) => {
-      if (response.data && response.data.sucesso && response.data.dados) {
+      if (response.data.dados) {
+        console.log(response.data.dados);
         const curtida = response.data.dados;
-        setAcaoCurtida(curtida?.acao);
-        if (curtida.acao === !acao) {
-          atualizarCurtida(curtida.id, acao);
-        } else if (curtida.acao === acao) {
-          removerCurtida(curtida.id);
-          setAcaoCurtida(null);
-        } 
-      } else {
-        inserirCurtida(acao, props.usuario?.id, props.postagem?.id);
-      }
-    })
-    .catch((error) => {
-        Alert.alert(error.message);
-        console.log(error);
-    })
-    .finally(() => {
-      props.setLoading(false);
-      obterCurtida();
-      props.atualizarPostagem();
-    })
-    
-  }
+        if (curtida && curtida.acao == false) {
+          setClickedDislike(true);
+        }
 
-  function obterCurtida() {
-    props.setLoading(true);
-    axios({
-      method: "GET",
-      url: `${API_URL}/api/curtida/${props.postagem?.id}/${props.usuario?.id}`,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      httpsAgent: {  
-        rejectUnauthorized: false
-      }
-    }).then((response) => {
-      if (response.data && response.data.sucesso && response.data.dados) {
-        const curtida = response.data.dados;
-        setAcaoCurtida(curtida?.acao);
+        if (curtida != null && curtida.acao == true) {
+          setClickedLike(true);
+        }
       }
     })
     .catch((error) => {
         Alert.alert(error.message);
         console.log(error);
     });
-    props.setLoading(false);
+  }
+
+  async function clickLike() {
+    props.setLoading(true);
+    setClickedLike(!clickedLike);
+
+    const userData = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA');
+    const user = userData ? JSON.parse(userData) : null;
+    const idUser = user?.id;
+
+    axios({
+      method: "GET",
+      url: `${API_URL}/api/Curtida/${postagemModel.id}/${idUser}`,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }).then(async (response) => {
+      const res = response.data;
+      if (res.dados) {
+        const curtida = res.dados;
+        if (curtida != null && curtida.acao == false) {
+          setClickedDislike(false);
+          setPostagemModel({...postagemModel, curtidas: postagemModel.curtidas+1, descurtidas: postagemModel.descurtidas-1});
+          await atualizarCurtidaPostLike(curtida.id);
+        } else if (curtida != null && curtida.acao == true) {
+          await removerCurtidaPost(curtida.id);
+        }
+      } else {
+        setPostagemModel({...postagemModel, curtidas: postagemModel.curtidas+1});
+        await inserirCurtidaPost(idUser, true);
+      }
+    })
+    .catch((error) => {
+        Alert.alert(error.message);
+        console.log(error);
+    })
+    .finally(() => props.setLoading(false))
+  }
+
+  async function clickDislike() {
+    props.setLoading(true);
+    setClickedDislike(!clickedDislike);
+
+    const userData = await AsyncStorage.getItem('@PORTAL_CIDADAO_USER_DATA');
+    const user = userData ? JSON.parse(userData) : null;
+    const idUser = user?.id;
+
+    axios({
+      method: "GET",
+      url: `${API_URL}/api/Curtida/${postagemModel.id}/${idUser}`,
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }).then(async (response) => {
+      const res = response.data;
+      if (res.dados) {
+        const curtida = res.dados;
+        console.log('curtida encontrada:');
+        console.log(curtida);
+        if (curtida != null && curtida.acao == false) {
+          await removerCurtidaPost(curtida.id);
+          setPostagemModel({...postagemModel, descurtidas: postagemModel.descurtidas-1});
+        } else if (curtida != null && curtida.acao == true) {
+          setClickedLike(false);
+          await atualizarCurtidaPostDislike(curtida.id);
+          setPostagemModel({...postagemModel, descurtidas: postagemModel.descurtidas+1, curtidas: postagemModel.curtidas-1});
+        }
+      } else {
+        setPostagemModel({...postagemModel, descurtidas: postagemModel.descurtidas+1});
+        await inserirCurtidaPost(idUser, false);
+      }
+    })
+    .catch((error) => {
+        Alert.alert(error.message);
+        console.log(error);
+    })
+    .finally(() => props.setLoading(false))
   }
 
   const onSubmit = handleSubmit(async ({ descricao }) => {
@@ -325,15 +381,33 @@ export const ModalPostagem = ({
     .finally(() => { props.setLoading(false); });
   }
 
+  function obterCorConfiabilidade(confiabilidade: string) {
+    if (confiabilidade === 'Alta') return 'lightgreen';
+    if (confiabilidade === 'Média') return 'orange';
+    if (confiabilidade === 'Baixa') return 'lightcoral';
+
+    return 'black';
+  }
+
   return (
         <Modal isVisible={props.isVisible}>
           <Modal.Container>
               <Modal.Header title={props.postagem?.titulo} setIsVisible={props.setIsVisible}/>
-              {props.loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+              {/*props.loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />*/}
+              <Spinner
+                visible={props.loading}
+                color={'#FFF'}
+                textContent={'Carregando...'}
+                textStyle={{ color: '#FFF', fontSize: 30, textShadowOffset: {width: 2, height: 2}, textShadowColor: 'black', textShadowRadius: 2 }}
+              />
 
               <ScrollView style={{maxHeight: 500}} persistentScrollbar={true}>
                 <Modal.Body>
-                  <Text style={{ fontSize: 12, textAlign: 'center'}}>Confiabilidade: {props.postagem?.confiabilidade}</Text>
+                  
+                  <Text style={{ fontSize: 12, textAlign: 'center'}}>
+                    <MaterialIcons name="flag" size={24} color={obterCorConfiabilidade(props?.postagem.confiabilidade)} /> 
+                    Confiabilidade: {props.postagem?.confiabilidade}
+                  </Text>
                   {props.midia ? <Image
                     resizeMode={'cover'}
                     style={styles.postImage}
@@ -352,15 +426,15 @@ export const ModalPostagem = ({
 
                   <View style={styles.postInfo}>
                     <View style={styles.reactionsContainer}>
-                      <View style={styles.likeContainer}>
-                        <AntDesign name='like1' size={24} color={acaoCurtida === true ? '#5B628F' : '#000'} onPress={() => curtirOuDescurtir(true)}/>
-                        <Text style={{fontSize: 18, marginLeft: 4}}>{props.postagem?.curtidas}</Text>
-                      </View>
+                      <TouchableOpacity  style={styles.likeContainer} onPress={() => clickLike()}>
+                        <AntDesign name='like1' size={24} color={clickedLike === true ? '#5B628F' : '#000'}/>
+                        <Text style={{fontSize: 18, marginLeft: 4}}>{postagemModel?.curtidas}</Text>
+                      </TouchableOpacity >
 
-                      <View style={styles.likeContainer}>
-                        <AntDesign name='dislike1' size={24} color={acaoCurtida === false ? '#5B628F' : '#000'} onPress={() => curtirOuDescurtir(false)}/>
-                        <Text style={{fontSize: 18, marginLeft: 4}}>{props.postagem?.descurtidas}</Text>
-                      </View>
+                      <TouchableOpacity  style={styles.likeContainer} onPress={() => clickDislike()}>
+                        <AntDesign name='dislike1' size={24} color={clickedDislike === true ? '#5B628F' : '#000'}/>
+                        <Text style={{fontSize: 18, marginLeft: 4}}>{postagemModel?.descurtidas}</Text>
+                      </TouchableOpacity >
                     </View>
 
                     <View style={styles.postTimeContainer}> 

@@ -16,6 +16,7 @@ import DropDown from 'react-native-paper-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 import { Modal } from '../components/Modal';
 import {API_URL} from '@env'
+import Spinner from 'react-native-loading-spinner-overlay';
 
 interface FormDataValue {
   uri: string;
@@ -316,7 +317,12 @@ const NovaPostagemScreen=(props: any) => {
   
   return (
     <View style={styles.containerStyle}>
-    {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+        <Spinner
+          visible={loading}
+          color={'#FFF'}
+          textContent={'Carregando...'}
+          textStyle={{ color: '#FFF', fontSize: 30, textShadowOffset: {width: 2, height: 2}, textShadowColor: 'black', textShadowRadius: 2 }}
+        />
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
             {/* <Text style={styles.logoText}>Nova Postagem</Text> */}

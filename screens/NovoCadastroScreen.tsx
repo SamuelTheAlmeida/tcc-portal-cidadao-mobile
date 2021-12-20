@@ -11,6 +11,7 @@ import { Controller, useForm } from 'react-hook-form';
 import Toast from 'react-native-root-toast';
 import { TextInputMask } from 'react-native-masked-text';
 import {API_URL} from '@env'
+import Spinner from 'react-native-loading-spinner-overlay';
 
 interface FormData {
   nome: string;
@@ -88,115 +89,120 @@ export default function NovoCadastroScreen() {
     keyboardVerticalOffset={20}
     style={styles.containerView} 
     behavior="padding">
-    {loading && <ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />}
+      <Spinner
+        visible={loading}
+        color={'#FFF'}
+        textContent={'Carregando...'}
+        textStyle={{ color: '#FFF', fontSize: 30, textShadowOffset: {width: 2, height: 2}, textShadowColor: 'black', textShadowRadius: 2 }}
+      />
 
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.loginScreenContainer}>
-        <View style={styles.loginFormView}>
-          <Text style={styles.logoText}>Portal Cidadão</Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.loginScreenContainer}>
+          <View style={styles.loginFormView}>
+            <Text style={styles.logoText}>Portal Cidadão</Text>
 
-          <Controller
-            control={control}
-            name="nome"
-            render={({ field: { onBlur, onChange, value } }) => (
-              <TextInput
-                autoCapitalize="characters"
-                autoCompleteType="name"
-                autoCorrect={true}
+            <Controller
+              control={control}
+              name="nome"
+              render={({ field: { onBlur, onChange, value } }) => (
+                <TextInput
+                  autoCapitalize="characters"
+                  autoCompleteType="name"
+                  autoCorrect={true}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  returnKeyType="next"
+                  placeholder="Nome Completo *" 
+                  placeholderTextColor="#c4c3cb" 
+                  style={styles.loginFormTextInput} 
+                  textContentType="name"
+                  value={value}
+                  maxLength={100}
+                  onSubmitEditing={() => refCpfInput?.current._inputElement.focus()}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="CPF"
+              render={({ field: { onBlur, onChange, value } }) => (
+                <TextInputMask
+                autoCapitalize="none"
+                autoCompleteType="off"
+                autoCorrect={false}
+                keyboardType="number-pad"
                 onBlur={onBlur}
                 onChangeText={onChange}
                 returnKeyType="next"
-                placeholder="Nome Completo *" 
+                placeholder="CPF *" 
                 placeholderTextColor="#c4c3cb" 
                 style={styles.loginFormTextInput} 
-                textContentType="name"
+                textContentType="none"
                 value={value}
-                maxLength={100}
-                onSubmitEditing={() => refCpfInput?.current._inputElement.focus()}
+                type={'cpf'}
+                maxLength={14}
+                ref={refCpfInput}
+                onSubmitEditing={() => refEmailInput?.current.focus()}
               />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="CPF"
-            render={({ field: { onBlur, onChange, value } }) => (
-              <TextInputMask
-              autoCapitalize="none"
-              autoCompleteType="off"
-              autoCorrect={false}
-              keyboardType="number-pad"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              returnKeyType="next"
-              placeholder="CPF *" 
-              placeholderTextColor="#c4c3cb" 
-              style={styles.loginFormTextInput} 
-              textContentType="none"
-              value={value}
-              type={'cpf'}
-              maxLength={14}
-              ref={refCpfInput}
-              onSubmitEditing={() => refEmailInput?.current.focus()}
+              )}
             />
-            )}
-          />
 
-          <Controller
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onBlur, onChange, value } }) => (
+                <TextInput
+                  autoCapitalize="none"
+                  autoCompleteType="email"
+                  autoCorrect={false}
+                  keyboardType="email-address"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  returnKeyType="next"
+                  placeholder="E-mail *" 
+                  placeholderTextColor="#c4c3cb" 
+                  style={styles.loginFormTextInput} 
+                  textContentType="username"
+                  value={value}
+                  onSubmitEditing={() => refSenhaInput?.current.focus()}
+                  ref={refEmailInput}
+                  maxLength={100}
+                />
+              )}
+            />
+
+            <Controller
             control={control}
-            name="email"
-            render={({ field: { onBlur, onChange, value } }) => (
+            name="senha"
+            render={({ field: { onBlur, onChange, value }}) => (
               <TextInput
                 autoCapitalize="none"
-                autoCompleteType="email"
+                autoCompleteType="password"
                 autoCorrect={false}
-                keyboardType="email-address"
                 onBlur={onBlur}
                 onChangeText={onChange}
-                returnKeyType="next"
-                placeholder="E-mail *" 
+                onSubmitEditing={onSubmit}
+                returnKeyType="done"
+                secureTextEntry
+                placeholder="Senha *" 
                 placeholderTextColor="#c4c3cb" 
                 style={styles.loginFormTextInput} 
-                textContentType="username"
+                textContentType="password"
                 value={value}
-                onSubmitEditing={() => refSenhaInput?.current.focus()}
-                ref={refEmailInput}
-                maxLength={100}
+                ref={refSenhaInput}
+                maxLength={32}
               />
             )}
-          />
-
-          <Controller
-          control={control}
-          name="senha"
-          render={({ field: { onBlur, onChange, value }}) => (
-            <TextInput
-              autoCapitalize="none"
-              autoCompleteType="password"
-              autoCorrect={false}
-              onBlur={onBlur}
-              onChangeText={onChange}
-              onSubmitEditing={onSubmit}
-              returnKeyType="done"
-              secureTextEntry
-              placeholder="Senha *" 
-              placeholderTextColor="#c4c3cb" 
-              style={styles.loginFormTextInput} 
-              textContentType="password"
-              value={value}
-              ref={refSenhaInput}
-              maxLength={32}
             />
-          )}
-          />
-            <Button
-              mode="contained"
-              style={styles.loginButton}
-              onPress={onSubmit}
-            >Salvar dados</Button>
+              <Button
+                mode="contained"
+                style={styles.loginButton}
+                onPress={onSubmit}
+              >Salvar dados</Button>
+          </View>
         </View>
-      </View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }

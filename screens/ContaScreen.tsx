@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {API_URL} from '@env'
 import { MaterialIcons } from '@expo/vector-icons';
 import { Modal } from '../components/Modal';
+import Spinner from 'react-native-loading-spinner-overlay';
 
 interface FormData {
   login: string;
@@ -199,6 +200,8 @@ const ContaScreen=(props: any) => {
         if (response.status == 200) {
           if (response.data?.sucesso) {
             const dados = response.data.dados;
+            console.log(dados);
+            console.log('setando token como: ' + dados.token);
             await AsyncStorage.setItem('@PORTAL_CIDADAO_USER_TOKEN', dados.token);
             await AsyncStorage.setItem('@PORTAL_CIDADAO_USER_DATA', JSON.stringify(dados));
             setUserData(dados);
@@ -225,6 +228,12 @@ const ContaScreen=(props: any) => {
     if (userData) {
       return (        
         <View style={styles.accountContainerView}>
+          <Spinner
+            visible={loading}
+            color={'#FFF'}
+            textContent={'Carregando...'}
+            textStyle={{ color: '#FFF', fontSize: 30, textShadowOffset: {width: 2, height: 2}, textShadowColor: 'black', textShadowRadius: 2 }}
+          />
           <View style={styles.userHeader}>
             <MaterialIcons name="account-circle" size={128} color="#5B628F" />
             <Text style={styles.userName}>{userData.nome}</Text>
@@ -322,6 +331,12 @@ const ContaScreen=(props: any) => {
           keyboardVerticalOffset={20}
           style={styles.containerView} 
           behavior="padding">
+          <Spinner
+            visible={loading}
+            color={'#FFF'}
+            textContent={'Carregando...'}
+            textStyle={{ color: '#FFF', fontSize: 30, textShadowOffset: {width: 2, height: 2}, textShadowColor: 'black', textShadowRadius: 2 }}
+          />
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View style={styles.loginScreenContainer}>
                 <View style={styles.loginFormView}>
@@ -435,7 +450,12 @@ const ContaScreen=(props: any) => {
           </KeyboardAvoidingView>
         );        
       } else {
-        return (<ActivityIndicator size="large" style={styles.spinner} animating={true} color={Colors.blue800} />)
+        return (<Spinner
+          visible={true}
+          color={'#FFF'}
+          textContent={'Carregando...'}
+          textStyle={{ color: '#FFF', fontSize: 30, textShadowOffset: {width: 2, height: 2}, textShadowColor: 'black', textShadowRadius: 2 }}
+        />)
       }
     }
 
